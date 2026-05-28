@@ -292,15 +292,27 @@ export async function listPublicMemorials() {
       role: memorials.role,
       birthDate: memorials.birthDate,
       deathDate: memorials.deathDate,
+      recordType: memorials.recordType,
       church: memorials.church,
       verse: memorials.verse,
       verseRef: memorials.verseRef,
       summary: memorials.summary,
       status: memorials.status,
       createdAt: memorials.createdAt,
+      photoUrl: memorialGalleryPhotos.photoUrl,
+      photoCaption: memorialGalleryPhotos.caption,
     })
     .from(memorials)
-    .where(eq(memorials.visibility, "public"))
+    .leftJoin(
+      memorialGalleryPhotos,
+      and(
+        eq(memorialGalleryPhotos.memorialId, memorials.id),
+        eq(memorialGalleryPhotos.isRepresentative, 1)
+      )
+    )
+    .where(
+      and(eq(memorials.visibility, "public"), eq(memorials.recordType, "faith"))
+    )
     .orderBy(desc(memorials.createdAt))
     .limit(100);
 }
@@ -321,11 +333,21 @@ export async function searchPublicMemorials(keyword: string) {
       role: memorials.role,
       birthDate: memorials.birthDate,
       deathDate: memorials.deathDate,
+      recordType: memorials.recordType,
       church: memorials.church,
       summary: memorials.summary,
       visibility: memorials.visibility,
+      photoUrl: memorialGalleryPhotos.photoUrl,
+      photoCaption: memorialGalleryPhotos.caption,
     })
     .from(memorials)
+    .leftJoin(
+      memorialGalleryPhotos,
+      and(
+        eq(memorialGalleryPhotos.memorialId, memorials.id),
+        eq(memorialGalleryPhotos.isRepresentative, 1)
+      )
+    )
     .where(like(memorials.name, `%${normalizedKeyword}%`))
     .orderBy(desc(memorials.createdAt))
     .limit(12);
@@ -345,6 +367,7 @@ export async function listAdminMemorials() {
       role: memorials.role,
       birthDate: memorials.birthDate,
       deathDate: memorials.deathDate,
+      recordType: memorials.recordType,
       church: memorials.church,
       familyContact: memorials.familyContact,
       familyPhone: memorials.familyPhone,
@@ -403,6 +426,7 @@ export async function getPublicMemorialBySlug(slug: string) {
       role: memorials.role,
       birthDate: memorials.birthDate,
       deathDate: memorials.deathDate,
+      recordType: memorials.recordType,
       church: memorials.church,
       verse: memorials.verse,
       verseRef: memorials.verseRef,
@@ -426,6 +450,41 @@ export async function getPublicMemorialBySlug(slug: string) {
   const memorial = result[0];
   if (!memorial) return null;
   return memorial;
+}
+
+export async function getMemorialShareBySlug(slug: string) {
+  const db = await getDb();
+  if (!db) {
+    throw new Error("Database is not available");
+  }
+
+  const result = await db
+    .select({
+      slug: memorials.slug,
+      name: memorials.name,
+      role: memorials.role,
+      birthDate: memorials.birthDate,
+      deathDate: memorials.deathDate,
+      recordType: memorials.recordType,
+      church: memorials.church,
+      summary: memorials.summary,
+      visibility: memorials.visibility,
+      status: memorials.status,
+      photoUrl: memorialGalleryPhotos.photoUrl,
+      photoCaption: memorialGalleryPhotos.caption,
+    })
+    .from(memorials)
+    .leftJoin(
+      memorialGalleryPhotos,
+      and(
+        eq(memorialGalleryPhotos.memorialId, memorials.id),
+        eq(memorialGalleryPhotos.isRepresentative, 1)
+      )
+    )
+    .where(eq(memorials.slug, slug))
+    .limit(1);
+
+  return result[0] ?? null;
 }
 
 export async function updateMemorial(
@@ -486,6 +545,7 @@ export async function getMemorialAccessStatus(slug: string) {
       role: memorials.role,
       birthDate: memorials.birthDate,
       deathDate: memorials.deathDate,
+      recordType: memorials.recordType,
       church: memorials.church,
       summary: memorials.summary,
       visibility: memorials.visibility,
@@ -504,6 +564,7 @@ export async function getMemorialAccessStatus(slug: string) {
     role: memorial.role,
     birthDate: memorial.birthDate,
     deathDate: memorial.deathDate,
+    recordType: memorial.recordType,
     church: memorial.church,
     summary: memorial.summary,
     visibility: memorial.visibility,
@@ -643,7 +704,7 @@ export async function verifyMemorialFamilyRoomPassword(
     notes: [
       {
         title: "가족의 기억",
-        body: "공개 추모관에 모두 담기 어려운 사적인 기억과 이야기를 가족끼리 천천히 남길 수 있습니다.",
+        body: "공개 기념관에 모두 담기 어려운 사적인 기억과 이야기를 가족끼리 천천히 남길 수 있습니다.",
       },
       {
         title: "비공개 기록",
@@ -856,7 +917,13 @@ export async function listRecentMemorialLetters(limit = 100) {
     .where(
       and(
         eq(memorialLetters.status, "published"),
-        or(eq(memorials.visibility, "public"), isNull(memorialLetters.memorialId))
+        or(
+          and(
+            eq(memorials.visibility, "public"),
+            eq(memorials.recordType, "memorial")
+          ),
+          isNull(memorialLetters.memorialId)
+        )
       )
     )
     .orderBy(desc(memorialLetters.createdAt), desc(memorialLetters.id))

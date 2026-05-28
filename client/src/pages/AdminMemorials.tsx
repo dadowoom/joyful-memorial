@@ -20,6 +20,7 @@ type AdminMemorial = {
   role: string;
   birthDate: string;
   deathDate: string;
+  recordType: "faith" | "memorial";
   church: string;
   familyContact: string | null;
   familyPhone: string | null;
@@ -89,10 +90,10 @@ export default function AdminMemorials() {
                 className="text-4xl font-normal leading-tight md:text-6xl"
                 style={serifStyle}
               >
-                추모관 관리
+                기념관 관리
               </h1>
               <p className="mt-6 max-w-2xl text-sm leading-7 text-[#616161]">
-                등록된 추모관을 확인하고, 기본 정보와 공개 설정을 조용히
+                등록된 신앙기념관과 추모관을 확인하고, 기본 정보와 공개 설정을
                 정리합니다.
               </p>
             </div>
@@ -121,17 +122,17 @@ export default function AdminMemorials() {
               <Link href="/memorial/create">
                 <button className="inline-flex h-12 items-center justify-center gap-2 bg-[#18181b] px-5 text-sm font-medium text-white transition-opacity hover:opacity-90">
                   <Plus className="h-4 w-4" strokeWidth={1.7} />
-                  새 추모관
+                  새 신앙기념관
                 </button>
               </Link>
             </div>
 
             {memorialsQuery.isLoading ? (
-              <Panel text="추모관 목록을 불러오고 있습니다." />
+              <Panel text="기념관 목록을 불러오고 있습니다." />
             ) : memorialsQuery.isError ? (
               <Panel text="목록을 불러오지 못했습니다." />
             ) : filteredMemorials.length === 0 ? (
-              <Panel text="조건에 맞는 추모관이 없습니다." />
+              <Panel text="조건에 맞는 기념관이 없습니다." />
             ) : (
               <div className="overflow-hidden border-y border-[#dbdad7]">
                 <div className="hidden grid-cols-[150px_1.1fr_0.9fr_0.8fr_0.8fr_178px] border-b border-[#dbdad7] bg-[#f8f7f4] px-5 py-3 text-[11px] font-medium uppercase tracking-[0.2em] text-[#777] lg:grid">
@@ -150,7 +151,9 @@ export default function AdminMemorials() {
                       className="grid gap-4 bg-white px-4 py-5 transition-colors hover:bg-[#faf9f6] lg:grid-cols-[150px_1.1fr_0.9fr_0.8fr_0.8fr_178px] lg:items-center lg:px-5"
                     >
                       <p className="text-xs tracking-[0.1em] text-[#616161] md:text-sm">
-                        {memorial.birthDate} - {memorial.deathDate}
+                        {memorial.recordType === "memorial"
+                          ? `${memorial.birthDate} - ${memorial.deathDate}`
+                          : `출생 ${memorial.birthDate}`}
                       </p>
 
                       <div>
@@ -161,7 +164,10 @@ export default function AdminMemorials() {
                           {memorial.name}
                         </h2>
                         <p className="mt-1 text-sm text-[#616161]">
-                          {memorial.role}
+                          {memorial.role} ·{" "}
+                          {memorial.recordType === "memorial"
+                            ? "추모관"
+                            : "신앙기념관"}
                         </p>
                       </div>
 

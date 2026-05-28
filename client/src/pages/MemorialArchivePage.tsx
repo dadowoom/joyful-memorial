@@ -31,6 +31,7 @@ type ArchiveMemorial = {
   role: string;
   birthDate: string;
   deathDate: string;
+  recordType?: "faith" | "memorial";
   church: string;
   summary: string;
   summaryDisplaySize?: string | null;
@@ -53,7 +54,8 @@ const serifStyle = { fontFamily: "'Noto Serif KR', serif" } as const;
 const warmGold = "oklch(0.50 0.07 72)";
 const warmText = "oklch(0.25 0.04 50)";
 const mutedText = "oklch(0.42 0.02 55)";
-const memorialPhotoFilter = "saturate(0.72) contrast(0.98) brightness(1.02)";
+const faithPhotoFilter = "saturate(1.05) contrast(1.01) brightness(1.02)";
+const memorialPhotoFilter = "saturate(0.68) contrast(0.98) brightness(1.01)";
 const getMemorialAccessStorageKey = (slug: string) =>
   `joyful.memorialAccess.${slug}`;
 const readStoredAccessToken = (slug: string) => {
@@ -80,6 +82,9 @@ export default function MemorialArchivePage() {
   }, [slug]);
 
   const memorial = memorialQuery.data as ArchiveMemorial | undefined;
+  const isMemorialHall =
+    memorial?.recordType === "memorial" ||
+    Boolean(memorial?.deathDate?.trim());
   const photosQuery = trpc.gallery.listByMemorial.useQuery(
     { memorialId: memorial?.id ?? 0 },
     { enabled: Boolean(memorial?.id) }
@@ -113,7 +118,7 @@ export default function MemorialArchivePage() {
   return (
     <div
       className="min-h-screen overflow-x-hidden text-[#121212]"
-      style={{ background: "#ffffff" }}
+      style={{ background: isMemorialHall ? "#ffffff" : "#fffefa" }}
     >
       <Navbar />
 
@@ -133,10 +138,16 @@ export default function MemorialArchivePage() {
               <GoldDust />
 
               <div className="container relative z-10 py-12 md:py-20">
-                <Link href={`/memorial/${memorial.slug}`}>
+                <Link
+                  href={
+                    isMemorialHall
+                      ? `/memorial/${memorial.slug}`
+                      : "/memorial-garden#faith-memorials"
+                  }
+                >
                   <button className="mb-10 inline-flex h-10 items-center gap-2 border border-[#e6ded1] bg-white px-4 text-sm text-[#4f4638] transition-colors hover:bg-[#faf9f7]">
                     <ArrowLeft className="h-4 w-4" strokeWidth={1.6} />
-                    추모관으로 돌아가기
+                    {isMemorialHall ? "추모관으로 돌아가기" : "목록으로 돌아가기"}
                   </button>
                 </Link>
 
@@ -151,7 +162,7 @@ export default function MemorialArchivePage() {
                         className="text-[11px] font-medium uppercase tracking-[0.28em]"
                         style={{ color: warmGold }}
                       >
-                        추모관 만들기 · 개인 기념관
+                        {isMemorialHall ? "추모 기념관" : "신앙기념관"}
                       </p>
                     </div>
 
@@ -176,7 +187,9 @@ export default function MemorialArchivePage() {
                       />
                     </p>
                     <p className="mt-2 text-sm" style={{ color: mutedText }}>
-                      {memorial.church} 가족 기록관
+                      {isMemorialHall
+                        ? `${memorial.church} 추모관`
+                        : `${memorial.church} 신앙기념관`}
                     </p>
 
                     <div
@@ -216,8 +229,8 @@ export default function MemorialArchivePage() {
                       />
                       <ArchiveFact
                         icon={<CalendarDays className="h-4 w-4" />}
-                        label="소천"
-                        value={memorial.deathDate}
+                        label={isMemorialHall ? "소천" : "직분"}
+                        value={isMemorialHall ? memorial.deathDate : memorial.role}
                       />
                       <ArchiveFact
                         icon={<Church className="h-4 w-4" />}
@@ -272,7 +285,11 @@ export default function MemorialArchivePage() {
                           src={toImgUrl(heroPhoto)}
                           alt={`${memorial.name} 사진`}
                           className="aspect-[4/5] w-full object-cover"
-                          style={{ filter: memorialPhotoFilter }}
+                          style={{
+                            filter: isMemorialHall
+                              ? memorialPhotoFilter
+                              : faithPhotoFilter,
+                          }}
                         />
                       ) : (
                         <div
@@ -315,9 +332,13 @@ export default function MemorialArchivePage() {
             <section className="py-20 md:py-28">
               <div className="container">
                 <SectionHeader
-                  eyebrow="Faith Story"
-                  title="신앙의 이야기"
-                  description="가족이 남긴 기억과 신앙의 고백을 조용히 담았습니다."
+                  eyebrow={isMemorialHall ? "Faith Story" : "Faith Journey"}
+                  title={isMemorialHall ? "신앙의 이야기" : "이어가는 신앙 여정"}
+                  description={
+                    isMemorialHall
+                      ? "가족과 교회가 기억하는 믿음의 발자취를 담았습니다."
+                      : "가족과 교회가 오늘의 감사와 섬김을 함께 기록합니다."
+                  }
                 />
 
                 <div className="mx-auto grid max-w-5xl gap-10 md:grid-cols-[0.85fr_1.15fr] md:items-center">
@@ -361,7 +382,7 @@ export default function MemorialArchivePage() {
                       className="text-2xl font-light"
                       style={{ ...serifStyle, color: warmText }}
                     >
-                      기억으로 남은 삶
+                      {isMemorialHall ? "기억으로 남은 삶" : "지금 이어가는 신앙"}
                     </h2>
                     <div
                       className="mt-6 whitespace-pre-wrap break-words font-light leading-8"
@@ -413,6 +434,7 @@ export default function MemorialArchivePage() {
               memorialName={memorial.name}
               accessToken={accessToken || undefined}
               isPrivate={memorial.visibility === "private"}
+              variant={isMemorialHall ? "memorial" : "faith"}
             />
           </>
         )}

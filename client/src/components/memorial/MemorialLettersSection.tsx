@@ -13,11 +13,13 @@ export default function MemorialLettersSection({
   memorialName,
   accessToken,
   isPrivate = false,
+  variant = "faith",
 }: {
   memorialSlug: string;
   memorialName: string;
   accessToken?: string;
   isPrivate?: boolean;
+  variant?: "faith" | "memorial";
 }) {
   const utils = trpc.useUtils();
   const [author, setAuthor] = useState("");
@@ -27,16 +29,17 @@ export default function MemorialLettersSection({
     memorialSlug,
     accessToken: accessToken || undefined,
   };
+  const isMemorial = variant === "memorial";
 
   const lettersQuery = trpc.letter.byMemorial.useQuery(queryInput);
   const createLetterMutation = trpc.letter.create.useMutation({
     onSuccess: async () => {
       setAuthor("");
       setContent("");
-      setMessage("편지가 남겨졌습니다.");
+      setMessage(isMemorial ? "편지가 남겨졌습니다." : "응원글이 남겨졌습니다.");
       await Promise.all([
         utils.letter.byMemorial.invalidate(queryInput),
-        utils.letter.recent.invalidate(),
+        isMemorial ? utils.letter.recent.invalidate() : Promise.resolve(),
       ]);
     },
   });
@@ -47,7 +50,11 @@ export default function MemorialLettersSection({
     const trimmedContent = content.trim();
 
     if (!trimmedAuthor || !trimmedContent) {
-      setMessage("이름과 편지 내용을 모두 입력해주세요.");
+      setMessage(
+        isMemorial
+          ? "이름과 편지 내용을 모두 입력해주세요."
+          : "이름과 응원글 내용을 모두 입력해주세요."
+      );
       return;
     }
 
@@ -61,12 +68,16 @@ export default function MemorialLettersSection({
   };
 
   return (
-    <section id="letters" className="py-20 md:py-28">
+    <section id={isMemorial ? "letters" : "comments"} className="py-20 md:py-28">
       <div className="container">
         <SectionHeader
-          eyebrow="Letters"
-          title="하늘로 보내는 편지"
-          description={`${memorialName}님께 전하고 싶은 마음을 남겨주세요.`}
+          eyebrow={isMemorial ? "Letters" : "Messages"}
+          title={isMemorial ? "하늘로 보내는 편지" : "응원글"}
+          description={
+            isMemorial
+              ? `${memorialName}님의 추모관에 남긴 편지는 하늘로 보내는 편지에도 함께 모입니다.`
+              : `${memorialName}님의 신앙기념관에 응원과 감사의 마음을 남겨주세요.`
+          }
         />
 
         <div className="mx-auto max-w-5xl">
@@ -95,12 +106,16 @@ export default function MemorialLettersSection({
                   className="text-xs font-medium uppercase tracking-[0.16em]"
                   style={{ color: warmGold }}
                 >
-                  To {memorialName}
+                  {isMemorial ? `To ${memorialName}` : "Message"}
                 </span>
                 <textarea
                   value={content}
                   onChange={event => setContent(event.target.value)}
-                  placeholder="전하고 싶은 마음을 남겨주세요."
+                  placeholder={
+                    isMemorial
+                      ? "하늘로 전하고 싶은 마음을 남겨주세요."
+                      : "응원이나 감사의 마음을 남겨주세요."
+                  }
                   maxLength={2000}
                   rows={5}
                   className="mt-4 w-full resize-none bg-transparent text-sm leading-7 text-[#121212] outline-none placeholder:text-[#9a9a9a]"
@@ -111,15 +126,21 @@ export default function MemorialLettersSection({
               <p className="text-xs leading-6" style={{ color: mutedText }}>
                 {message ||
                   (isPrivate
-                    ? "비공개 추모관에만 보관되며 전체 편지 목록에는 표시되지 않습니다."
-                    : "남겨진 편지는 하늘로 보내는 편지에 함께 모입니다.")}
+                    ? "비공개 기념관에만 보관되며 해당 기념관 안에서만 표시됩니다."
+                    : isMemorial
+                      ? "남겨진 편지는 하늘로 보내는 편지에 함께 모입니다."
+                      : "응원글은 이 신앙기념관 안에서만 표시됩니다.")}
               </p>
               <button
                 type="submit"
                 disabled={createLetterMutation.isPending}
                 className="inline-flex h-11 items-center justify-center gap-2 bg-[#1f1d1a] px-5 text-sm font-medium text-white transition-colors hover:bg-[#33302b] disabled:cursor-not-allowed disabled:opacity-50"
               >
-                {createLetterMutation.isPending ? "남기는 중" : "편지 남기기"}
+                {createLetterMutation.isPending
+                  ? "남기는 중"
+                  : isMemorial
+                    ? "편지 남기기"
+                    : "응원글 남기기"}
                 <Send className="h-4 w-4" strokeWidth={1.7} />
               </button>
             </div>
@@ -131,7 +152,9 @@ export default function MemorialLettersSection({
                 className="border-b border-[#e6ded1] py-7 text-sm"
                 style={{ color: mutedText }}
               >
-                편지를 불러오고 있습니다.
+                {isMemorial
+                  ? "편지를 불러오고 있습니다."
+                  : "응원글을 불러오고 있습니다."}
               </p>
             ) : lettersQuery.data?.length ? (
               lettersQuery.data.map(letter => (
@@ -163,12 +186,15 @@ export default function MemorialLettersSection({
                 className="border-b border-[#e6ded1] py-7 text-sm"
                 style={{ color: mutedText }}
               >
-                아직 남겨진 편지가 없습니다.
+                {isMemorial
+                  ? "아직 남겨진 편지가 없습니다."
+                  : "아직 남겨진 응원글이 없습니다."}
               </p>
             )}
           </div>
 
-          <div className="mt-8 text-center">
+          {isMemorial && (
+            <div className="mt-8 text-center">
             <Link href="/letters">
               <span
                 className="inline-flex h-11 items-center justify-center border border-[#e6ded1] bg-white px-5 text-sm font-medium transition-colors hover:bg-[#faf9f7]"
@@ -177,7 +203,8 @@ export default function MemorialLettersSection({
                 모든 편지 보기
               </span>
             </Link>
-          </div>
+            </div>
+          )}
         </div>
       </div>
     </section>

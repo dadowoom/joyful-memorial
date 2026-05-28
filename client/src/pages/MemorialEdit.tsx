@@ -29,6 +29,7 @@ type AdminMemorial = {
   role: string;
   birthDate: string;
   deathDate: string;
+  recordType: "faith" | "memorial";
   church: string;
   familyContact: string | null;
   familyPhone: string | null;
@@ -55,6 +56,7 @@ type FormState = {
   role: string;
   birthDate: string;
   deathDate: string;
+  recordType: "faith" | "memorial";
   church: string;
   familyContact: string;
   familyPhone: string;
@@ -74,6 +76,7 @@ const initialForm: FormState = {
   role: "",
   birthDate: "",
   deathDate: "",
+  recordType: "faith",
   church: "기쁨이 있는교회",
   familyContact: "",
   familyPhone: "",
@@ -92,7 +95,6 @@ const requiredFields: Array<{ key: keyof FormState; label: string }> = [
   { key: "name", label: "성함" },
   { key: "role", label: "직분" },
   { key: "birthDate", label: "출생일" },
-  { key: "deathDate", label: "소천일" },
   { key: "summary", label: "한 줄 소개" },
   { key: "story", label: "삶의 기록" },
 ];
@@ -105,7 +107,7 @@ const visibilityOptions: Array<{
   {
     value: "public",
     label: "전체 공개",
-    desc: "누구나 추모관에 들어갈 수 있습니다.",
+    desc: "누구나 기념관에 들어갈 수 있습니다.",
   },
   {
     value: "private",
@@ -164,6 +166,7 @@ export default function MemorialEdit() {
       role: memorial.role,
       birthDate: memorial.birthDate,
       deathDate: memorial.deathDate,
+      recordType: memorial.recordType ?? (memorial.deathDate ? "memorial" : "faith"),
       church: memorial.church,
       familyContact: memorial.familyContact ?? "",
       familyPhone: memorial.familyPhone ?? "",
@@ -254,13 +257,17 @@ export default function MemorialEdit() {
       }
     });
 
+    if (form.recordType === "memorial" && !form.deathDate.trim()) {
+      nextErrors.deathDate = "추모관 전환 시 소천일을 입력해 주세요.";
+    }
+
     if (
       form.visibility === "private" &&
       !memorial?.hasAccessPassword &&
       !form.accessPassword.trim()
     ) {
       nextErrors.accessPassword =
-        "비공개 추모관은 입장 비밀번호를 입력해 주세요.";
+        "비공개 기념관은 입장 비밀번호를 입력해 주세요.";
     }
 
     setErrors(nextErrors);
@@ -286,7 +293,8 @@ export default function MemorialEdit() {
         name: form.name,
         role: form.role,
         birthDate: form.birthDate,
-        deathDate: form.deathDate,
+        deathDate: form.recordType === "memorial" ? form.deathDate : "",
+        recordType: form.recordType,
         church: form.church,
         familyContact: form.familyContact || null,
         familyPhone: form.familyPhone || null,
@@ -294,8 +302,8 @@ export default function MemorialEdit() {
         verseRef: form.verseRef || null,
         summary: form.summary,
         story: form.story,
-        serviceTime: form.serviceTime || null,
-        memorialDay: form.memorialDay || null,
+        serviceTime: form.recordType === "memorial" ? form.serviceTime || null : null,
+        memorialDay: form.recordType === "memorial" ? form.memorialDay || null : null,
         visibility: form.visibility,
         accessPassword: form.accessPassword.trim() || undefined,
         managerMemo: form.managerMemo || null,
@@ -482,6 +490,37 @@ export default function MemorialEdit() {
                       </select>
                     </Field>
 
+                    <Field label="운영 모드">
+                      <select
+                        className={selectClass}
+                        value={form.recordType}
+                        onChange={event => {
+                          const recordType = event.target.value as
+                            | "faith"
+                            | "memorial";
+                          setForm(current => ({
+                            ...current,
+                            recordType,
+                            deathDate:
+                              recordType === "memorial"
+                                ? current.deathDate
+                                : "",
+                            serviceTime:
+                              recordType === "memorial"
+                                ? current.serviceTime
+                                : "",
+                            memorialDay:
+                              recordType === "memorial"
+                                ? current.memorialDay
+                                : "",
+                          }));
+                        }}
+                      >
+                        <option value="faith">신앙기념관</option>
+                        <option value="memorial">추모관</option>
+                      </select>
+                    </Field>
+
                     <Field label="출생일" error={errors.birthDate} required>
                       <input
                         className={inputClass}
@@ -493,16 +532,18 @@ export default function MemorialEdit() {
                       />
                     </Field>
 
-                    <Field label="소천일" error={errors.deathDate} required>
-                      <input
-                        className={inputClass}
-                        value={form.deathDate}
-                        onChange={event =>
-                          updateField("deathDate", event.target.value)
-                        }
-                        placeholder="2026 또는 2026-01-01"
-                      />
-                    </Field>
+                    {form.recordType === "memorial" && (
+                      <Field label="소천일" error={errors.deathDate}>
+                        <input
+                          className={inputClass}
+                          value={form.deathDate}
+                          onChange={event =>
+                            updateField("deathDate", event.target.value)
+                          }
+                          placeholder="2026 또는 2026-01-01"
+                        />
+                      </Field>
+                    )}
 
                     <Field label="소속 교회">
                       <input
@@ -514,7 +555,7 @@ export default function MemorialEdit() {
                       />
                     </Field>
 
-                    <Field label="추모관 주소">
+                    <Field label="기념관 주소">
                       <input
                         className={`${inputClass} text-[#9a9a9a]`}
                         value={memorial.slug}
@@ -596,29 +637,31 @@ export default function MemorialEdit() {
                       />
                     </Field>
 
-                    <div className="grid gap-6 md:grid-cols-2">
-                      <Field label="추도일">
-                        <input
-                          className={inputClass}
-                          value={form.memorialDay}
-                          onChange={event =>
-                            updateField("memorialDay", event.target.value)
-                          }
-                          placeholder="매년 3월 1일"
-                        />
-                      </Field>
+                    {form.recordType === "memorial" && (
+                      <div className="grid gap-6 md:grid-cols-2">
+                        <Field label="추도일">
+                          <input
+                            className={inputClass}
+                            value={form.memorialDay}
+                            onChange={event =>
+                              updateField("memorialDay", event.target.value)
+                            }
+                            placeholder="매년 3월 1일"
+                          />
+                        </Field>
 
-                      <Field label="예배 일시 안내">
-                        <input
-                          className={inputClass}
-                          value={form.serviceTime}
-                          onChange={event =>
-                            updateField("serviceTime", event.target.value)
-                          }
-                          placeholder="추후 안내"
-                        />
-                      </Field>
-                    </div>
+                        <Field label="예배 일시 안내">
+                          <input
+                            className={inputClass}
+                            value={form.serviceTime}
+                            onChange={event =>
+                              updateField("serviceTime", event.target.value)
+                            }
+                            placeholder="추후 안내"
+                          />
+                        </Field>
+                      </div>
+                    )}
                   </div>
                 </section>
 

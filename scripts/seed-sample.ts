@@ -27,7 +27,8 @@ async function main() {
       name: "정기쁨",
       role: "권사",
       birthDate: "1941-04-18",
-      deathDate: "2026-02-11",
+      deathDate: "",
+      recordType: "faith",
       church: "기쁨이 있는교회",
       familyContact: "정하은",
       familyPhone: null,
@@ -35,12 +36,12 @@ async function main() {
         "항상 기뻐하라 쉬지 말고 기도하라 범사에 감사하라 이것이 그리스도 예수 안에서 너희를 향하신 하나님의 뜻이니라",
       verseRef: "데살로니가전서 5:16-18",
       summary:
-        "감사와 기도로 가족과 교회를 따뜻하게 품었던 기쁨이 있는교회의 권사님",
+        "감사와 기도로 가족과 교회를 따뜻하게 섬기는 기쁨이 있는교회의 권사님",
       story:
-        "정기쁨 권사님은 예배의 자리를 삶의 중심에 두고, 작은 섬김을 오래도록 이어간 분이었습니다.\n\n가족에게는 매일의 기도로 든든한 울타리가 되어 주었고, 교회 공동체에는 조용한 환대와 따뜻한 격려를 남겼습니다. 권사님의 삶은 화려하지 않았지만, 감사의 언어와 부활의 믿음으로 주변 사람들에게 깊은 위로가 되었습니다.",
-      servicePlace: "기쁨이 있는교회 본당",
-      serviceTime: "2026-02-13T10:00",
-      memorialDay: "매년 2월 11일",
+        "정기쁨 권사님은 예배의 자리를 삶의 중심에 두고, 작은 섬김을 오래도록 이어가는 분입니다.\n\n가족에게는 매일의 기도로 든든한 울타리가 되어 주고, 교회 공동체에는 조용한 환대와 따뜻한 격려를 건넵니다. 권사님의 삶은 화려하지 않지만, 감사의 언어와 부활의 믿음으로 주변 사람들에게 깊은 위로와 기쁨을 전하고 있습니다.",
+      servicePlace: null,
+      serviceTime: null,
+      memorialDay: null,
       visibility: "public",
       status: "published",
       timelineJson: JSON.stringify([
@@ -60,9 +61,9 @@ async function main() {
           description: "교회 공동체를 섬기는 일에 감사로 헌신했습니다.",
         },
         {
-          year: "2026",
-          title: "주님의 품으로",
-          description: "가족과 교회의 기억 속에 믿음의 유산을 남겼습니다.",
+          year: "현재",
+          title: "이어지는 신앙 기록",
+          description: "가족과 교회가 감사와 응원의 마음을 함께 기록합니다.",
         },
       ]),
       managerMemo: "새 프로젝트 확인용 샘플 인물입니다.",
@@ -70,6 +71,11 @@ async function main() {
     .onDuplicateKeyUpdate({
       set: {
         church: "기쁨이 있는교회",
+        recordType: "faith",
+        deathDate: "",
+        servicePlace: null,
+        serviceTime: null,
+        memorialDay: null,
         visibility: "public",
         status: "published",
         updatedAt: new Date(),
@@ -108,7 +114,7 @@ async function main() {
         ),
         title: "정기쁨 권사님 가족관",
         intro:
-          "가족이 함께 나누는 비공개 기억 공간입니다. 공개 추모관에 담기 어려운 사진과 이야기를 차분히 이어갈 수 있습니다.",
+          "가족이 함께 나누는 비공개 기록 공간입니다. 공개 신앙기념관에 담기 어려운 사진과 이야기를 차분히 이어갈 수 있습니다.",
       })
       .onDuplicateKeyUpdate({
         set: {
@@ -172,7 +178,7 @@ async function ensureVideo(memorialId: number) {
   await db.insert(memorialVideos).values({
     memorialId,
     title: "감사의 기억",
-    description: "가족이 함께 보는 샘플 추모 영상입니다.",
+    description: "가족이 함께 보는 샘플 신앙기념 영상입니다.",
     youtubeVideoId,
     isVisible: 1,
     sortOrder: 0,
@@ -258,7 +264,7 @@ async function ensureLetter(memorialId: number) {
   if (!db) throw new Error("Database is not available.");
 
   const content =
-    "권사님, 함께 드리던 예배와 조용히 건네주시던 따뜻한 말들을 기억합니다. 남겨주신 감사의 믿음이 우리 안에 오래 이어지기를 기도합니다.";
+    "권사님, 함께 드리는 예배와 조용히 건네주시는 따뜻한 말들을 기억합니다. 감사의 믿음이 우리 안에 오래 이어지기를 응원합니다.";
   const [existing] = await db
     .select({ id: memorialLetters.id })
     .from(memorialLetters)

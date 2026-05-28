@@ -49,14 +49,14 @@ export default function MemorialSearch() {
                 className="text-4xl font-normal md:text-6xl"
                 style={serifStyle}
               >
-                추모관 검색
+                기념관 검색
               </h1>
               <p
                 className="mt-6 max-w-xl text-sm leading-7"
                 style={{ color: muted }}
               >
-                고인의 성함을 입력하면 해당 추모관을 찾을 수 있습니다. 공개
-                여부는 검색 결과에서 확인할 수 있고, 비공개 추모관은 비밀번호를
+                성함을 입력하면 해당 신앙기념관 또는 추모관을 찾을 수 있습니다. 공개
+                여부는 검색 결과에서 확인할 수 있고, 비공개 기념관은 비밀번호를
                 입력한 뒤 입장합니다.
               </p>
             </div>
@@ -74,7 +74,7 @@ export default function MemorialSearch() {
                 <input
                   value={query}
                   onChange={event => setQuery(event.target.value)}
-                  placeholder="고인 성함을 두 글자 이상 입력하세요"
+                  placeholder="성함을 두 글자 이상 입력하세요"
                   className="h-10 min-w-0 flex-1 bg-transparent text-base outline-none placeholder:text-[#9c968b]"
                   autoFocus
                 />
@@ -112,7 +112,7 @@ export default function MemorialSearch() {
                   className="mx-auto mt-5 max-w-md text-sm leading-7"
                   style={{ color: muted }}
                 >
-                  가족과 지인이 필요한 순간에 조용히 찾아볼 수 있도록, 추모관은
+                  가족과 지인이 필요한 순간에 조용히 찾아볼 수 있도록, 기념관은
                   검색을 통해서만 확인합니다.
                 </p>
               </div>
@@ -122,7 +122,7 @@ export default function MemorialSearch() {
                 style={{ borderColor: line }}
               >
                 <p className="text-sm" style={{ color: muted }}>
-                  추모관을 검색하고 있습니다.
+                  기념관을 검색하고 있습니다.
                 </p>
               </div>
             ) : memorialsQuery.isError ? (
@@ -131,7 +131,7 @@ export default function MemorialSearch() {
                 style={{ borderColor: line }}
               >
                 <p className="text-sm" style={{ color: muted }}>
-                  추모관을 검색하지 못했습니다.
+                  기념관을 검색하지 못했습니다.
                 </p>
               </div>
             ) : results.length === 0 ? (
@@ -173,7 +173,9 @@ export default function MemorialSearch() {
                         className="text-xs md:text-sm"
                         style={{ color: muted, letterSpacing: "0.08em" }}
                       >
-                        {memorial.birthDate} - {memorial.deathDate}
+                        {memorial.recordType === "memorial"
+                          ? `${memorial.birthDate} - ${memorial.deathDate}`
+                          : `출생 ${memorial.birthDate}`}
                       </p>
                       <h2
                         className="flex flex-wrap items-center gap-2 text-2xl font-normal md:text-xl"
@@ -189,6 +191,14 @@ export default function MemorialSearch() {
                             비공개
                           </span>
                         )}
+                        <span
+                          className="inline-flex border px-2 py-1 text-[11px] font-sans"
+                          style={{ borderColor: line, color: olive }}
+                        >
+                          {memorial.recordType === "memorial"
+                            ? "추모관"
+                            : "신앙기념관"}
+                        </span>
                       </h2>
                       <p className="text-sm" style={{ color: muted }}>
                         {memorial.church}
@@ -201,7 +211,11 @@ export default function MemorialSearch() {
                           className="group inline-flex h-10 w-fit items-center justify-center gap-2 border px-4 text-sm transition-colors hover:bg-[#fbfaf6] md:ml-auto"
                           style={{ borderColor: line, color: ink }}
                         >
-                          {memorial.isPrivate ? "비밀번호 입력" : "추모관 보기"}
+                          {memorial.isPrivate
+                            ? "비밀번호 입력"
+                            : memorial.recordType === "memorial"
+                              ? "추모관 보기"
+                              : "신앙기념관 보기"}
                           <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-1" />
                         </button>
                       </Link>

@@ -15,57 +15,57 @@ import { Link, useLocation } from "wouter";
 
 const serifStyle = { fontFamily: "'Noto Serif KR', serif" } as const;
 const ink = "#29251d";
-const muted = "#686257";
-const olive = "#6f7658";
-const line = "#ded7c8";
-const ivory = "#fbfaf6";
-const sand = "#f2eee4";
-const gold = "#a6844b";
+const muted = "#6f675b";
+const olive = "#7a835f";
+const line = "#e8decd";
+const ivory = "#fffdf8";
+const sand = "#f8f1e6";
+const gold = "#b08a4b";
 
 const VALUES = [
   {
-    title: "기억",
-    desc: "이름과 사진 너머에 남아 있는 삶의 결, 신앙의 고백, 가족의 목소리를 차분히 보존합니다.",
+    title: "기쁨",
+    desc: "한 사람의 믿음이 오늘도 가족과 교회 안에서 기쁨으로 이어지도록 밝게 기록합니다.",
   },
   {
     title: "감사",
     desc: "함께 예배하고 섬겼던 시간을 감사의 언어로 정리해 다음 세대가 다시 읽을 수 있게 합니다.",
   },
   {
-    title: "위로",
-    desc: "찾아오는 이들이 슬픔에 머물지 않고 공동체의 기도와 따뜻한 말을 만날 수 있도록 돕습니다.",
+    title: "신앙의 이야기",
+    desc: "사진, 영상, 책장과 연표를 통해 살아 있는 신앙의 여정을 차분히 엮습니다.",
   },
   {
-    title: "부활의 기쁨",
-    desc: "작별의 무게를 가볍게 만들지 않으면서도, 믿음 안의 약속과 다시 만날 기쁨을 조용히 담습니다.",
+    title: "공동체",
+    desc: "가족과 교우가 응원의 마음을 남기며 한 사람의 삶을 함께 세워갑니다.",
   },
 ];
 
 const SERVICES = [
   {
-    title: "추모관 검색",
-    desc: "성함으로 등록된 추모관을 찾고, 비공개 추모관은 비밀번호 확인 후 입장합니다.",
+    title: "기념관 찾기",
+    desc: "성함으로 등록된 신앙기념관을 찾고, 비공개 공간은 비밀번호 확인 후 입장합니다.",
     icon: Search,
-    href: "/memorial/search",
+    href: "/memorial-garden#faith-memorials",
   },
   {
-    title: "추모관 만들기",
+    title: "신앙기념관 만들기",
     desc: "회원가입 또는 로그인 후 기본 정보, 신앙 이야기, 생애 기록, 사진을 등록합니다.",
     icon: PenLine,
     href: "/memorial/create",
   },
   {
-    title: "하늘로 보내는 편지",
-    desc: "각 추모관에 남긴 편지와 메인에서 직접 쓴 편지가 한 흐름으로 모입니다.",
+    title: "응원글과 추모 편지",
+    desc: "신앙기념관에는 응원글을, 추모관 전환 이후에는 하늘로 보내는 편지를 남깁니다.",
     icon: Mail,
     href: "/letters",
   },
 ];
 
 const PROCESS = [
-  "고인의 기본 정보와 대표 말씀을 입력합니다.",
+  "인물의 기본 정보와 대표 말씀을 입력합니다.",
   "삶과 신앙 이야기, 사진, 연표를 차분히 정리합니다.",
-  "공개 범위와 비밀번호를 설정한 뒤 바로 추모관을 공개합니다.",
+  "공개 범위와 비밀번호를 설정한 뒤 바로 신앙기념관을 공개합니다.",
 ];
 
 function formatDate(value: Date | string) {
@@ -87,7 +87,7 @@ export default function Home() {
     event.preventDefault();
     const keyword = search.trim();
     if (!keyword) {
-      setLocation("/memorial/search");
+      setLocation("/memorial-garden#faith-memorials");
       return;
     }
     setLocation(`/memorial/search?q=${encodeURIComponent(keyword)}`);
@@ -99,7 +99,7 @@ export default function Home() {
 
       <main className="pt-16">
         <section
-          className="relative min-h-[calc(100svh-4rem)] overflow-hidden border-b"
+          className="relative min-h-[calc(90svh-4rem)] overflow-hidden border-b"
           style={{ borderColor: line, background: ivory }}
         >
           <div className="absolute inset-0 md:left-[42%]">
@@ -108,37 +108,39 @@ export default function Home() {
               alt=""
               className="h-full w-full object-cover object-center"
             />
-            <div className="absolute inset-0 bg-white/20" />
-            <div className="absolute inset-0 bg-gradient-to-r from-[#fbfaf6] via-[#fbfaf6]/88 to-[#fbfaf6]/12" />
-            <div className="absolute inset-0 bg-gradient-to-b from-white/12 via-transparent to-[#fbfaf6]/72" />
+            <div className="absolute inset-0 bg-white/12" />
+            <div className="absolute inset-0 bg-gradient-to-r from-[#fffdf8] via-[#fffdf8]/84 to-[#fffdf8]/10" />
+            <div className="absolute inset-0 bg-gradient-to-b from-white/10 via-transparent to-[#fffdf8]/66" />
           </div>
 
-          <div className="container relative z-10 flex min-h-[calc(100svh-4rem)] flex-col justify-center py-12 md:py-20">
+          <div className="container relative z-10 flex min-h-[calc(90svh-4rem)] flex-col justify-center py-12 md:py-20">
             <div className="max-w-2xl">
               <p
                 className="text-[11px] font-medium uppercase"
                 style={{ letterSpacing: "0.18em", color: olive }}
               >
-                기쁨이 있는교회 디지털추모관
+                기쁨이 있는교회
               </p>
               <h1
                 className="mt-6 text-5xl font-normal leading-[1.12] sm:text-6xl md:text-7xl"
                 style={serifStyle}
               >
-                기쁨의 기억
+                기쁨이 있는 곳
+                <br />
+                신앙기념관
               </h1>
               <p
                 className="mt-7 max-w-xl text-base leading-8 md:text-lg"
                 style={{ color: muted }}
               >
-                삶의 마지막 장면만이 아니라, 하나님 앞에서 살아온 감사와 사랑의
-                흔적을 가족과 공동체가 함께 기억하는 밝고 경건한 추모
-                공간입니다.
+                살아계신 성도의 삶과 믿음, 감사의 흔적을 밝은 신앙기념관으로
+                남깁니다. 가족의 응원과 교회 공동체의 기록이 오늘의 믿음 안에서
+                이어집니다.
               </p>
 
               <form
                 onSubmit={submitSearch}
-                className="mt-10 max-w-xl border bg-white/88 backdrop-blur"
+                className="mt-10 max-w-xl rounded-[8px] border bg-white/92 shadow-[0_18px_45px_rgba(75,66,52,0.08)] backdrop-blur"
                 style={{ borderColor: line }}
               >
                 <label className="flex min-h-16 items-center gap-3 px-4">
@@ -151,11 +153,11 @@ export default function Home() {
                     value={search}
                     onChange={event => setSearch(event.target.value)}
                     className="min-w-0 flex-1 bg-transparent text-base outline-none placeholder:text-[#9c968b]"
-                    placeholder="고인 성함으로 추모관 검색"
+                    placeholder="성함으로 신앙기념관 찾기"
                   />
                   <button
                     type="submit"
-                    className="inline-flex h-10 items-center justify-center gap-2 px-4 text-sm font-medium text-white"
+                    className="inline-flex h-10 items-center justify-center gap-2 rounded-full px-4 text-sm font-medium text-white"
                     style={{ background: ink }}
                   >
                     검색
@@ -167,22 +169,38 @@ export default function Home() {
               <div className="mt-4 flex flex-col gap-3 sm:flex-row">
                 <Link href="/memorial/create">
                   <button
-                    className="inline-flex h-12 items-center justify-center gap-2 px-5 text-sm font-medium text-white"
+                    className="inline-flex h-12 items-center justify-center gap-2 rounded-full px-5 text-sm font-medium text-white"
                     style={{ background: olive }}
                   >
                     <PenLine className="h-4 w-4" />
-                    추모관 만들기
+                    신앙기념관 만들기
                   </button>
                 </Link>
                 <Link href="/letters">
                   <button
-                    className="inline-flex h-12 items-center justify-center gap-2 border bg-white px-5 text-sm font-medium"
+                    className="inline-flex h-12 items-center justify-center gap-2 rounded-full border bg-white/92 px-5 text-sm font-medium"
                     style={{ borderColor: line, color: ink }}
                   >
                     <Mail className="h-4 w-4" />
-                    하늘로 보내는 편지
+                    추모관 편지
                   </button>
                 </Link>
+              </div>
+
+              <div
+                className="mt-8 grid max-w-2xl gap-px overflow-hidden rounded-[8px] border bg-[#e8decd] sm:grid-cols-3"
+                style={{ borderColor: line }}
+              >
+                {["사진첩", "영상 기록", "책장과 연표"].map(item => (
+                  <div key={item} className="bg-white/86 px-4 py-3">
+                    <p className="text-sm font-medium" style={{ color: ink }}>
+                      {item}
+                    </p>
+                    <p className="mt-1 text-xs" style={{ color: muted }}>
+                      신앙기념관 안에서 보관
+                    </p>
+                  </div>
+                ))}
               </div>
             </div>
           </div>
@@ -196,27 +214,27 @@ export default function Home() {
                   className="text-[11px] font-medium uppercase"
                   style={{ letterSpacing: "0.18em", color: gold }}
                 >
-                  Memorial Guide
+                  Memorial Hall
                 </p>
                 <h2
                   className="mt-4 text-3xl font-normal leading-tight md:text-5xl"
                   style={serifStyle}
                 >
-                  기억은 조용히,
+                  신앙기념관에서
                   <br />
-                  위로는 따뜻하게
+                  기억이 이어집니다
                 </h2>
               </div>
 
               <div
-                className="grid gap-px md:grid-cols-3"
+                className="grid gap-px overflow-hidden rounded-[8px] border md:grid-cols-3"
                 style={{ background: line }}
               >
                 {SERVICES.map(service => {
                   const Icon = service.icon;
                   return (
                     <Link key={service.title} href={service.href}>
-                      <article className="h-full bg-white p-6 transition-colors hover:bg-[#fbfaf6]">
+                      <article className="h-full bg-white p-6 transition-colors hover:bg-[#fffdf8]">
                         <div className="mb-12 flex items-center justify-between">
                           <Icon
                             className="h-5 w-5"
@@ -264,16 +282,16 @@ export default function Home() {
                   className="mt-4 text-3xl font-normal leading-tight md:text-5xl"
                   style={serifStyle}
                 >
-                  밝지만 경건한
+                  밝고 경건한
                   <br />
-                  디지털 추모관
+                  신앙기념관
                 </h2>
                 <p
                   className="mt-6 max-w-md text-sm leading-7"
                   style={{ color: muted }}
                 >
-                  기쁨이 있는교회 디지털추모관은 장식보다 여백을, 슬픔의
-                  과장보다 믿음의 언어를 선택합니다.
+                  기쁨이 있는 곳 신앙기념관은 과한 장식보다 여백을, 어두움보다
+                  감사와 신앙의 이야기를 선택합니다.
                 </p>
               </div>
 
@@ -315,7 +333,7 @@ export default function Home() {
               >
                 만들고,
                 <br />
-                바로 공개합니다
+                신앙기념관으로 공개합니다
               </h2>
             </div>
             <div className="border-t" style={{ borderColor: line }}>
@@ -345,21 +363,21 @@ export default function Home() {
                   className="text-[11px] font-medium uppercase"
                   style={{ letterSpacing: "0.18em", color: olive }}
                 >
-                  Letters
+                  Memorial Letters
                 </p>
                 <h2
                   className="mt-4 text-3xl font-normal leading-tight md:text-5xl"
                   style={serifStyle}
                 >
-                  하늘로 보내는 편지
+                  추모관 편지
                 </h2>
               </div>
               <Link href="/letters">
-                <button
-                  className="inline-flex h-11 items-center justify-center gap-2 border px-4 text-sm font-medium"
+              <button
+                  className="inline-flex h-11 items-center justify-center gap-2 rounded-full border px-4 text-sm font-medium"
                   style={{ borderColor: line, color: ink }}
                 >
-                  전체 편지 보기
+                  편지 보기
                   <ArrowRight className="h-4 w-4" />
                 </button>
               </Link>
@@ -428,18 +446,18 @@ export default function Home() {
                   className="mt-3 max-w-2xl text-sm leading-7"
                   style={{ color: muted }}
                 >
-                  추모관은 생성 후 바로 공개되며, 이후 기념관에서 사진첩, 영상
-                  기록, 책장과 연표를 계속 보완할 수 있습니다.
+                  신앙기념관은 생성 후 바로 공개되며, 이후 사진첩, 영상 기록,
+                  책장과 연표를 계속 보완할 수 있습니다.
                 </p>
               </div>
             </div>
             <Link href="/memorial/create">
               <button
-                className="inline-flex h-12 items-center justify-center gap-2 px-5 text-sm font-medium text-white"
+                className="inline-flex h-12 items-center justify-center gap-2 rounded-full px-5 text-sm font-medium text-white"
                 style={{ background: ink }}
               >
                 <BookOpenText className="h-4 w-4" />
-                추모관 만들기
+                신앙기념관 만들기
               </button>
             </Link>
           </div>

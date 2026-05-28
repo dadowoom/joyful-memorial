@@ -54,6 +54,9 @@ export const memorials = mysqlTable("memorials", {
   role: varchar("role", { length: 80 }).notNull(),
   birthDate: varchar("birthDate", { length: 20 }).notNull(),
   deathDate: varchar("deathDate", { length: 20 }).notNull(),
+  recordType: mysqlEnum("recordType", ["faith", "memorial"])
+    .default("faith")
+    .notNull(),
   church: varchar("church", { length: 160 }).default("기쁨이 있는교회").notNull(),
   familyContact: varchar("familyContact", { length: 120 }),
   familyPhone: varchar("familyPhone", { length: 80 }),

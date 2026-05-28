@@ -137,7 +137,7 @@ export default function MemorialFamilyPage() {
                         가족 전용 공간
                       </p>
                       <p className="mt-2 text-sm leading-7 text-[#6f6a61]">
-                        공개 추모관과 분리된 비공개 기록 공간입니다.
+                        공개 기념관과 분리된 비공개 기록 공간입니다.
                       </p>
                     </div>
                   </div>
@@ -152,7 +152,7 @@ export default function MemorialFamilyPage() {
             {statusQuery.isLoading ? (
               <StateBlock text="가족관을 불러오고 있습니다." />
             ) : statusQuery.isError || !status ? (
-              <StateBlock text="추모관을 찾을 수 없습니다." />
+              <StateBlock text="기념관을 찾을 수 없습니다." />
             ) : !hasFamilyRoom ? (
               <StateBlock text="아직 준비된 가족관이 없습니다." />
             ) : room ? (
@@ -227,7 +227,7 @@ function PasswordGate({
             {memorialName} {memorialRole}
           </p>
           <p className="mx-auto mt-6 max-w-xl text-sm leading-7 text-[#6f6a61]">
-            이 공간은 유족과 가족을 위한 비공개 공간입니다. 전달받은
+            이 공간은 가족을 위한 비공개 공간입니다. 전달받은
             비밀번호를 입력한 뒤 들어갈 수 있습니다.
           </p>
         </div>

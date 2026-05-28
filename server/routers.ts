@@ -49,7 +49,8 @@ const memorialCreateInput = z.object({
   name: z.string().trim().min(1).max(120),
   role: z.string().trim().min(1).max(80),
   birthDate: z.string().trim().min(1).max(20),
-  deathDate: z.string().trim().min(1).max(20),
+  deathDate: z.string().trim().max(20).default(""),
+  recordType: z.enum(["faith", "memorial"]).default("faith"),
   church: z.string().trim().max(160).default("기쁨이 있는교회"),
   familyContact: z.string().trim().max(120).optional(),
   familyPhone: z.string().trim().max(80).optional(),
@@ -146,7 +147,8 @@ const memorialUpdateInput = z.object({
   name: z.string().trim().min(1).max(120).optional(),
   role: z.string().trim().min(1).max(80).optional(),
   birthDate: z.string().trim().min(1).max(20).optional(),
-  deathDate: z.string().trim().min(1).max(20).optional(),
+  deathDate: z.string().trim().max(20).optional(),
+  recordType: z.enum(["faith", "memorial"]).optional(),
   church: z.string().trim().min(1).max(160).optional(),
   familyContact: z.string().trim().max(120).nullable().optional(),
   familyPhone: z.string().trim().max(80).nullable().optional(),
@@ -293,7 +295,10 @@ export const appRouter = router({
       return memorials.map(memorial => ({
         ...memorial,
         isPrivate: memorial.visibility === "private",
-        href: `/memorial/${memorial.slug}`,
+        href:
+          memorial.visibility !== "private" && memorial.recordType === "faith"
+            ? `/memorial/${memorial.slug}/archive`
+            : `/memorial/${memorial.slug}`,
         editHref: `/admin/memorials/${memorial.slug}/edit`,
       }));
     }),
@@ -305,7 +310,7 @@ export const appRouter = router({
         if (!memorial) {
           throw new TRPCError({
             code: "NOT_FOUND",
-            message: "추모관을 찾을 수 없습니다.",
+            message: "기념관을 찾을 수 없습니다.",
           });
         }
 
@@ -337,7 +342,10 @@ export const appRouter = router({
 
       return memorials.map(memorial => ({
         ...memorial,
-        href: `/memorial/${memorial.slug}`,
+        href:
+          memorial.recordType === "faith"
+            ? `/memorial/${memorial.slug}/archive`
+            : `/memorial/${memorial.slug}`,
       }));
     }),
 
@@ -349,7 +357,10 @@ export const appRouter = router({
         return memorials.map(memorial => ({
           ...memorial,
           isPrivate: memorial.visibility === "private",
-          href: `/memorial/${memorial.slug}`,
+          href:
+            memorial.visibility !== "private" && memorial.recordType === "faith"
+              ? `/memorial/${memorial.slug}/archive`
+              : `/memorial/${memorial.slug}`,
         }));
       }),
 
@@ -360,7 +371,7 @@ export const appRouter = router({
         if (!status) {
           throw new TRPCError({
             code: "NOT_FOUND",
-            message: "추모관을 찾을 수 없습니다.",
+            message: "기념관을 찾을 수 없습니다.",
           });
         }
 
@@ -379,7 +390,7 @@ export const appRouter = router({
         if (access === null) {
           throw new TRPCError({
             code: "NOT_FOUND",
-            message: "추모관을 찾을 수 없습니다.",
+            message: "기념관을 찾을 수 없습니다.",
           });
         }
 
@@ -405,14 +416,14 @@ export const appRouter = router({
         if (!memorial) {
           throw new TRPCError({
             code: "NOT_FOUND",
-            message: "추모관을 찾을 수 없습니다.",
+            message: "기념관을 찾을 수 없습니다.",
           });
         }
 
         if (!canReadMemorial(memorial, input.accessToken)) {
           throw new TRPCError({
             code: "FORBIDDEN",
-            message: "비공개 추모관입니다.",
+            message: "비공개 기념관입니다.",
           });
         }
 
@@ -445,7 +456,7 @@ export const appRouter = router({
         if (input.visibility === "private" && !input.accessPassword?.trim()) {
           throw new TRPCError({
             code: "BAD_REQUEST",
-            message: "비공개 추모관은 입장 비밀번호가 필요합니다.",
+            message: "비공개 기념관은 입장 비밀번호가 필요합니다.",
           });
         }
 
@@ -457,7 +468,8 @@ export const appRouter = router({
           name: input.name,
           role: input.role,
           birthDate: input.birthDate,
-          deathDate: input.deathDate,
+          deathDate: input.recordType === "memorial" ? input.deathDate : "",
+          recordType: input.recordType,
           church: input.church || "기쁨이 있는교회",
           familyContact: input.familyContact || null,
           familyPhone: input.familyPhone || null,
@@ -468,7 +480,8 @@ export const appRouter = router({
           story: input.story,
           servicePlace: input.servicePlace || null,
           serviceTime: input.serviceTime || null,
-          memorialDay: input.memorialDay || null,
+          memorialDay:
+            input.recordType === "memorial" ? input.memorialDay || null : null,
           visibility: input.visibility,
           accessPasswordHash:
             input.visibility === "private" && input.accessPassword
@@ -501,7 +514,10 @@ export const appRouter = router({
           id: created.id,
           slug: created.slug,
           status: created.status,
-          href: `/memorial/${created.slug}`,
+          href:
+            input.visibility !== "private" && created.recordType === "faith"
+              ? `/memorial/${created.slug}/archive`
+              : `/memorial/${created.slug}`,
         };
       }),
 
@@ -514,13 +530,18 @@ export const appRouter = router({
         if (!existing) {
           throw new TRPCError({
             code: "NOT_FOUND",
-            message: "추모관을 찾을 수 없습니다.",
+            message: "기념관을 찾을 수 없습니다.",
           });
         }
 
         const updateData: Parameters<typeof updateMemorial>[1] = {
           ...data,
         };
+
+        if (data.recordType === "faith") {
+          updateData.deathDate = "";
+          updateData.memorialDay = null;
+        }
 
         if (visibility) {
           updateData.visibility = visibility;
@@ -545,7 +566,7 @@ export const appRouter = router({
         } else if (visibility === "private" && !existing.accessPasswordHash) {
           throw new TRPCError({
             code: "BAD_REQUEST",
-            message: "비공개 추모관은 입장 비밀번호가 필요합니다.",
+            message: "비공개 기념관은 입장 비밀번호가 필요합니다.",
           });
         }
 
@@ -574,13 +595,13 @@ export const appRouter = router({
         if (!memorial) {
           throw new TRPCError({
             code: "NOT_FOUND",
-            message: "추모관을 찾을 수 없습니다.",
+            message: "기념관을 찾을 수 없습니다.",
           });
         }
         if (!canReadMemorial(memorial, input.accessToken)) {
           throw new TRPCError({
             code: "FORBIDDEN",
-            message: "비공개 추모관입니다.",
+            message: "비공개 기념관입니다.",
           });
         }
 
@@ -596,13 +617,13 @@ export const appRouter = router({
           if (!memorial) {
             throw new TRPCError({
               code: "NOT_FOUND",
-              message: "추모관을 찾을 수 없습니다.",
+              message: "기념관을 찾을 수 없습니다.",
             });
           }
           if (!canReadMemorial(memorial, input.accessToken)) {
             throw new TRPCError({
               code: "FORBIDDEN",
-              message: "비공개 추모관입니다.",
+              message: "비공개 기념관입니다.",
             });
           }
         }
@@ -612,7 +633,7 @@ export const appRouter = router({
           throw new TRPCError({
             code: "NOT_FOUND",
             message: input.memorialSlug
-              ? "추모관을 찾을 수 없습니다."
+              ? "기념관을 찾을 수 없습니다."
               : "편지를 남길 수 없습니다.",
           });
         }
@@ -629,7 +650,7 @@ export const appRouter = router({
         if (!status) {
           throw new TRPCError({
             code: "NOT_FOUND",
-            message: "추모관을 찾을 수 없습니다.",
+            message: "기념관을 찾을 수 없습니다.",
           });
         }
 
@@ -674,7 +695,7 @@ export const appRouter = router({
         if (!subscribed) {
           throw new TRPCError({
             code: "NOT_FOUND",
-            message: "추모관을 찾을 수 없습니다.",
+            message: "기념관을 찾을 수 없습니다.",
           });
         }
 

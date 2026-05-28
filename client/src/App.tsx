@@ -10,6 +10,7 @@ import MemorialCreate from "./pages/MemorialCreate";
 import Letters from "./pages/Letters";
 import Login from "./pages/Login";
 import AdminMemorials from "./pages/AdminMemorials";
+import MemorialGarden from "./pages/MemorialGarden";
 import MemorialSearch from "./pages/MemorialSearch";
 import MemorialPublicDetail from "./pages/MemorialPublicDetail";
 import MemorialArchivePage from "./pages/MemorialArchivePage";
@@ -30,6 +31,7 @@ function Router() {
       <Route path={"/admin/memorials/:slug/edit"} component={MemorialEdit} />
       <Route path={"/memorial/create"} component={MemorialCreate} />
       <Route path={"/letters"} component={Letters} />
+      <Route path={"/memorial-garden"} component={MemorialGarden} />
       <Route path={"/memorial/search"} component={MemorialSearch} />
       <Route path={"/memorial/:slug/archive"} component={MemorialArchivePage} />
       <Route path={"/memorial/:slug/family"} component={MemorialFamilyPage} />
