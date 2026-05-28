@@ -98,7 +98,7 @@ export default function Login() {
     }
 
     if (!signupConsent) {
-      setMessage("회원가입과 신앙기념관 생성을 위한 필수 동의가 필요합니다.");
+      setMessage("회원가입과 인생기념관 생성을 위한 필수 동의가 필요합니다.");
       return;
     }
 
@@ -143,10 +143,10 @@ export default function Login() {
               >
                 회원가입 후 바로
                 <br />
-                신앙기념관을 만듭니다
+                인생기념관을 만듭니다
               </h1>
               <p className="mt-6 max-w-lg text-sm leading-7 text-[#616161]">
-                신앙기념관 만들기는 회원가입 또는 로그인 후 이용할 수 있습니다.
+                인생기념관 만들기는 회원가입 또는 로그인 후 이용할 수 있습니다.
                 가입을 마치면 바로 기념관 생성 화면으로 이어집니다.
               </p>
 
@@ -154,7 +154,7 @@ export default function Login() {
                 {[
                   ["01", "회원가입"],
                   ["02", "기념관 만들기"],
-                  ["03", "신앙기념관 생성"],
+                  ["03", "인생기념관 생성"],
                 ].map(([number, text]) => (
                   <div key={number} className="bg-white p-5">
                     <p className="text-xs text-[#777]">{number}</p>
@@ -189,7 +189,7 @@ export default function Login() {
                 <form onSubmit={submitLogin} className="mt-8 space-y-6">
                   {isCreateRedirect && (
                     <div className="border border-[#dbdad7] p-4 text-sm leading-6 text-[#616161]">
-                      이미 계정이 있다면 로그인 후 신앙기념관 만들기를 이어갈 수
+                      이미 계정이 있다면 로그인 후 인생기념관 만들기를 이어갈 수
                       있습니다.
                     </div>
                   )}
@@ -232,7 +232,7 @@ export default function Login() {
                 <form onSubmit={submitSignup} className="mt-8 space-y-6">
                   {isCreateRedirect && (
                     <div className="border border-[#dbdad7] p-4 text-sm leading-6 text-[#616161]">
-                      처음 이용하시는 경우 회원가입을 마치면 바로 신앙기념관 만들기
+                      처음 이용하시는 경우 회원가입을 마치면 바로 인생기념관 만들기
                       화면으로 이동합니다.
                     </div>
                   )}
@@ -322,7 +322,7 @@ export default function Login() {
                       required
                     />
                     <span>
-                      회원가입과 신앙기념관 생성에 필요한 개인정보 수집 및 이용에
+                      회원가입과 인생기념관 생성에 필요한 개인정보 수집 및 이용에
                       동의합니다.
                     </span>
                   </label>

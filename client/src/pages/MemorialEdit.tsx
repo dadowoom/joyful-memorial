@@ -77,7 +77,7 @@ const initialForm: FormState = {
   birthDate: "",
   deathDate: "",
   recordType: "faith",
-  church: "기쁨이 있는교회",
+  church: "우리 가족",
   familyContact: "",
   familyPhone: "",
   verse: "",
@@ -93,7 +93,7 @@ const initialForm: FormState = {
 
 const requiredFields: Array<{ key: keyof FormState; label: string }> = [
   { key: "name", label: "성함" },
-  { key: "role", label: "직분" },
+  { key: "role", label: "호칭" },
   { key: "birthDate", label: "출생일" },
   { key: "summary", label: "한 줄 소개" },
   { key: "story", label: "삶의 기록" },
@@ -258,7 +258,7 @@ export default function MemorialEdit() {
     });
 
     if (form.recordType === "memorial" && !form.deathDate.trim()) {
-      nextErrors.deathDate = "추모관 전환 시 소천일을 입력해 주세요.";
+      nextErrors.deathDate = "추모관 전환 시 별세일을 입력해 주세요.";
     }
 
     if (
@@ -350,7 +350,7 @@ export default function MemorialEdit() {
                 </button>
               </Link>
               <p className="mb-5 text-xs font-medium text-[#616161]">
-                추모관 수정
+                기념관 수정
               </p>
               <h1
                 className="text-4xl font-normal leading-tight md:text-6xl"
@@ -359,7 +359,7 @@ export default function MemorialEdit() {
                 {memorial?.name || "기록을 정리합니다"}
               </h1>
               <p className="mt-6 max-w-md text-sm leading-7 text-[#616161]">
-                고인의 삶과 믿음이 잘 전달되도록 기본 정보와 공개 범위를
+                가족의 삶과 이야기가 잘 전달되도록 기본 정보와 공개 범위를
                 정돈합니다.
               </p>
             </div>
@@ -404,7 +404,7 @@ export default function MemorialEdit() {
 
               {memorial && (
                 <div className="mt-6 border-t border-[#dbdad7] pt-5">
-                  <p className="text-xs text-[#616161]">추모관 주소</p>
+                  <p className="text-xs text-[#616161]">기념관 주소</p>
                   <p className="mt-2 break-all text-sm text-[#121212]">
                     /memorial/{memorial.slug}
                   </p>
@@ -415,9 +415,9 @@ export default function MemorialEdit() {
         </section>
 
         {memorialQuery.isLoading ? (
-          <StateBlock text="수정할 추모관을 불러오고 있습니다." />
+          <StateBlock text="수정할 기념관을 불러오고 있습니다." />
         ) : memorialQuery.isError || !memorial ? (
-          <StateBlock text="수정할 추모관을 찾을 수 없습니다." />
+          <StateBlock text="수정할 기념관을 찾을 수 없습니다." />
         ) : (
           <form onSubmit={handleSubmit} className="py-8 md:py-12">
             <div className="container grid gap-8 lg:grid-cols-[260px_minmax(0,1fr)]">
@@ -437,7 +437,7 @@ export default function MemorialEdit() {
                       href="#story"
                       className="block transition-colors hover:text-[#121212]"
                     >
-                      신앙 이야기
+                      삶의 이야기
                     </a>
                     <a
                       href="#timeline"
@@ -473,7 +473,7 @@ export default function MemorialEdit() {
                       />
                     </Field>
 
-                    <Field label="직분" error={errors.role} required>
+                    <Field label="호칭" error={errors.role} required>
                       <select
                         className={selectClass}
                         value={form.role}
@@ -482,11 +482,12 @@ export default function MemorialEdit() {
                         }
                       >
                         <option value="">선택해 주세요</option>
-                        <option value="권사">권사</option>
-                        <option value="장로">장로</option>
-                        <option value="집사">집사</option>
-                        <option value="목사">목사</option>
-                        <option value="성도">성도</option>
+                        <option value="아버지">아버지</option>
+                        <option value="어머니">어머니</option>
+                        <option value="할아버지">할아버지</option>
+                        <option value="할머니">할머니</option>
+                        <option value="가족">가족</option>
+                        <option value="선생님">선생님</option>
                       </select>
                     </Field>
 
@@ -516,7 +517,7 @@ export default function MemorialEdit() {
                           }));
                         }}
                       >
-                        <option value="faith">신앙기념관</option>
+                        <option value="faith">인생기념관</option>
                         <option value="memorial">추모관</option>
                       </select>
                     </Field>
@@ -533,7 +534,7 @@ export default function MemorialEdit() {
                     </Field>
 
                     {form.recordType === "memorial" && (
-                      <Field label="소천일" error={errors.deathDate}>
+                      <Field label="별세일" error={errors.deathDate}>
                         <input
                           className={inputClass}
                           value={form.deathDate}
@@ -545,7 +546,7 @@ export default function MemorialEdit() {
                       </Field>
                     )}
 
-                    <Field label="소속 교회">
+                    <Field label="가족/지역">
                       <input
                         className={inputClass}
                         value={form.church}
@@ -592,11 +593,11 @@ export default function MemorialEdit() {
                   id="story"
                   className="scroll-mt-24 border border-[#dbdad7] p-5 md:p-8"
                 >
-                  <SectionHeader number="02" title="신앙 이야기" />
+                  <SectionHeader number="02" title="삶의 이야기" />
 
                   <div className="space-y-6">
                     <div className="grid gap-6 md:grid-cols-2">
-                      <Field label="성경 구절">
+                      <Field label="기억 문장">
                         <textarea
                           className="min-h-28 w-full resize-y border border-[#dbdad7] bg-transparent p-4 text-sm leading-7 outline-none transition-colors placeholder:text-[#9a9a9a] focus:border-[#18181b]"
                           value={form.verse}
@@ -606,7 +607,7 @@ export default function MemorialEdit() {
                         />
                       </Field>
 
-                      <Field label="성경 구절 위치">
+                      <Field label="기억 문장 위치">
                         <input
                           className={inputClass}
                           value={form.verseRef}
@@ -639,7 +640,7 @@ export default function MemorialEdit() {
 
                     {form.recordType === "memorial" && (
                       <div className="grid gap-6 md:grid-cols-2">
-                        <Field label="추도일">
+                        <Field label="기일">
                           <input
                             className={inputClass}
                             value={form.memorialDay}
@@ -650,7 +651,7 @@ export default function MemorialEdit() {
                           />
                         </Field>
 
-                        <Field label="예배 일시 안내">
+                        <Field label="모임 일시 안내">
                           <input
                             className={inputClass}
                             value={form.serviceTime}
@@ -786,7 +787,7 @@ export default function MemorialEdit() {
 
                     {form.visibility === "private" && (
                       <Field
-                        label="추모관 입장 비밀번호"
+                        label="기념관 입장 비밀번호"
                         error={errors.accessPassword}
                         required={!memorial.hasAccessPassword}
                       >
@@ -829,7 +830,7 @@ export default function MemorialEdit() {
                       </p>
                       <p className="mt-2 text-sm leading-6 text-[#616161]">
                         {notice ||
-                          "저장하면 공개 추모관과 검색 결과에 바로 반영됩니다."}
+                          "저장하면 공개 기념관과 검색 결과에 바로 반영됩니다."}
                       </p>
                     </div>
 
@@ -839,7 +840,7 @@ export default function MemorialEdit() {
                           type="button"
                           className="h-11 w-full border border-[#dbdad7] px-5 text-sm transition-colors hover:bg-[#f6f5f2] sm:w-auto"
                         >
-                          추모관 보기
+                          기념관 보기
                         </button>
                       </Link>
                       <button
@@ -869,7 +870,7 @@ export default function MemorialEdit() {
                           저장 완료
                         </p>
                         <p className="mt-2 text-sm leading-6 text-[#616161]">
-                          추모관의 기본 정보와 공개 설정이 갱신되었습니다.
+                          기념관의 기본 정보와 공개 설정이 갱신되었습니다.
                         </p>
                       </div>
                     </div>

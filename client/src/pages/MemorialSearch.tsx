@@ -55,7 +55,7 @@ export default function MemorialSearch() {
                 className="mt-6 max-w-xl text-sm leading-7"
                 style={{ color: muted }}
               >
-                성함을 입력하면 해당 신앙기념관 또는 추모관을 찾을 수 있습니다. 공개
+                성함을 입력하면 해당 인생기념관 또는 추모 기록을 찾을 수 있습니다. 공개
                 여부는 검색 결과에서 확인할 수 있고, 비공개 기념관은 비밀번호를
                 입력한 뒤 입장합니다.
               </p>
@@ -140,7 +140,7 @@ export default function MemorialSearch() {
                 style={{ borderColor: line }}
               >
                 <p className="text-sm" style={{ color: muted }}>
-                  일치하는 추모관이 없습니다.
+                  일치하는 기념관이 없습니다.
                 </p>
               </div>
             ) : (
@@ -158,8 +158,8 @@ export default function MemorialSearch() {
                 >
                   <span>Year</span>
                   <span>Name</span>
-                  <span>Church</span>
-                  <span>Role</span>
+                  <span>Family</span>
+                  <span>Title</span>
                   <span className="text-right">Link</span>
                 </div>
 
@@ -196,8 +196,8 @@ export default function MemorialSearch() {
                           style={{ borderColor: line, color: olive }}
                         >
                           {memorial.recordType === "memorial"
-                            ? "추모관"
-                            : "신앙기념관"}
+                            ? "추모 기록"
+                            : "인생기념관"}
                         </span>
                       </h2>
                       <p className="text-sm" style={{ color: muted }}>
@@ -214,8 +214,8 @@ export default function MemorialSearch() {
                           {memorial.isPrivate
                             ? "비밀번호 입력"
                             : memorial.recordType === "memorial"
-                              ? "추모관 보기"
-                              : "신앙기념관 보기"}
+                              ? "추모 기록 보기"
+                              : "인생기념관 보기"}
                           <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-1" />
                         </button>
                       </Link>

@@ -708,7 +708,7 @@ export async function verifyMemorialFamilyRoomPassword(
       },
       {
         title: "비공개 기록",
-        body: "사진, 편지, 예배 준비 메모처럼 가족에게만 필요한 기록을 정리해둘 공간입니다.",
+        body: "사진, 글, 가족 모임 메모처럼 가족에게만 필요한 기록을 정리해둘 공간입니다.",
       },
       {
         title: "함께 이어가기",
@@ -918,10 +918,7 @@ export async function listRecentMemorialLetters(limit = 100) {
       and(
         eq(memorialLetters.status, "published"),
         or(
-          and(
-            eq(memorials.visibility, "public"),
-            eq(memorials.recordType, "memorial")
-          ),
+          eq(memorials.visibility, "public"),
           isNull(memorialLetters.memorialId)
         )
       )
@@ -936,7 +933,7 @@ export async function listRecentMemorialLetters(limit = 100) {
     createdAt: row.createdAt,
     memorialId: row.memorialId,
     memorialSlug: row.memorialSlug,
-    memorialName: row.memorialName ?? row.recipientName ?? "하늘",
+    memorialName: row.memorialName ?? row.recipientName ?? "가족",
     memorialRole: row.memorialRole ?? row.recipientRole ?? "",
   }));
 }

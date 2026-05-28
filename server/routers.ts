@@ -51,7 +51,7 @@ const memorialCreateInput = z.object({
   birthDate: z.string().trim().min(1).max(20),
   deathDate: z.string().trim().max(20).default(""),
   recordType: z.enum(["faith", "memorial"]).default("faith"),
-  church: z.string().trim().max(160).default("기쁨이 있는교회"),
+  church: z.string().trim().max(160).default("우리 가족"),
   familyContact: z.string().trim().max(120).optional(),
   familyPhone: z.string().trim().max(80).optional(),
   slug: z.string().trim().max(120).optional(),
@@ -470,7 +470,7 @@ export const appRouter = router({
           birthDate: input.birthDate,
           deathDate: input.recordType === "memorial" ? input.deathDate : "",
           recordType: input.recordType,
-          church: input.church || "기쁨이 있는교회",
+          church: input.church || "우리 가족",
           familyContact: input.familyContact || null,
           familyPhone: input.familyPhone || null,
           slug: input.slug || input.name,
@@ -634,7 +634,7 @@ export const appRouter = router({
             code: "NOT_FOUND",
             message: input.memorialSlug
               ? "기념관을 찾을 수 없습니다."
-              : "편지를 남길 수 없습니다.",
+              : "마음글을 남길 수 없습니다.",
           });
         }
 

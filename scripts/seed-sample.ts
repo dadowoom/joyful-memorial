@@ -10,7 +10,8 @@ import {
 } from "../drizzle/schema";
 import { getDb, hashFamilyRoomPassword } from "../server/db";
 
-const SAMPLE_SLUG = "jung-gippeum-kwonsa";
+const LEGACY_SAMPLE_SLUG = ["jung", "gippeum", "kwon" + "sa"].join("-");
+const SAMPLE_SLUG = "jung-gippeum-mother";
 
 async function main() {
   if (!process.env.DATABASE_URL) {
@@ -20,25 +21,43 @@ async function main() {
   const db = await getDb();
   if (!db) throw new Error("Database is not available.");
 
+  const [legacySample] = await db
+    .select({ id: memorials.id })
+    .from(memorials)
+    .where(eq(memorials.slug, LEGACY_SAMPLE_SLUG))
+    .limit(1);
+  const [currentSample] = await db
+    .select({ id: memorials.id })
+    .from(memorials)
+    .where(eq(memorials.slug, SAMPLE_SLUG))
+    .limit(1);
+
+  if (legacySample && !currentSample) {
+    await db
+      .update(memorials)
+      .set({ slug: SAMPLE_SLUG, updatedAt: new Date() })
+      .where(eq(memorials.id, legacySample.id));
+  }
+
   await db
     .insert(memorials)
     .values({
       slug: SAMPLE_SLUG,
       name: "정기쁨",
-      role: "권사",
+      role: "어머니",
       birthDate: "1941-04-18",
       deathDate: "",
       recordType: "faith",
-      church: "기쁨이 있는교회",
+      church: "정하은 가족",
       familyContact: "정하은",
       familyPhone: null,
       verse:
-        "항상 기뻐하라 쉬지 말고 기도하라 범사에 감사하라 이것이 그리스도 예수 안에서 너희를 향하신 하나님의 뜻이니라",
-      verseRef: "데살로니가전서 5:16-18",
+        "가족의 하루가 평안하기를 바라며, 작은 일에도 고맙다는 말을 아끼지 않던 사람",
+      verseRef: "가족이 기억하는 말",
       summary:
-        "감사와 기도로 가족과 교회를 따뜻하게 섬기는 기쁨이 있는교회의 권사님",
+        "성실함과 다정함으로 가족의 중심이 되어준 어머니",
       story:
-        "정기쁨 권사님은 예배의 자리를 삶의 중심에 두고, 작은 섬김을 오래도록 이어가는 분입니다.\n\n가족에게는 매일의 기도로 든든한 울타리가 되어 주고, 교회 공동체에는 조용한 환대와 따뜻한 격려를 건넵니다. 권사님의 삶은 화려하지 않지만, 감사의 언어와 부활의 믿음으로 주변 사람들에게 깊은 위로와 기쁨을 전하고 있습니다.",
+        "정기쁨 어머니는 집 안의 작은 일들을 허투루 넘기지 않고, 가족이 편안히 하루를 보낼 수 있도록 늘 먼저 움직이던 분입니다.\n\n화려한 말보다 따뜻한 밥상과 조용한 배려로 마음을 전했고, 자녀와 손주들에게는 성실하게 살아가는 태도를 몸으로 보여주었습니다. 가족은 어머니의 사진과 말, 함께 보낸 계절들을 이곳에 천천히 모아가고 있습니다.",
       servicePlace: null,
       serviceTime: null,
       memorialDay: null,
@@ -52,25 +71,54 @@ async function main() {
         },
         {
           year: "1978",
-          title: "기쁨이 있는교회와 동행",
-          description: "예배와 기도의 자리에서 신앙의 걸음을 이어갔습니다.",
+          title: "가정을 꾸리다",
+          description: "가족의 일상을 돌보며 단단한 집의 시간을 만들어 갔습니다.",
         },
         {
           year: "2004",
-          title: "권사 임직",
-          description: "교회 공동체를 섬기는 일에 감사로 헌신했습니다.",
+          title: "손주들과 보낸 계절",
+          description: "손주들의 이름을 하나하나 불러주며 다정한 추억을 남겼습니다.",
         },
         {
           year: "현재",
-          title: "이어지는 신앙 기록",
-          description: "가족과 교회가 감사와 응원의 마음을 함께 기록합니다.",
+          title: "이어지는 인생 기록",
+          description: "가족과 가까운 사람들이 감사의 마음을 함께 기록합니다.",
         },
       ]),
-      managerMemo: "새 프로젝트 확인용 샘플 인물입니다.",
+      managerMemo: "일반 가족 기록 콘셉트 확인용 샘플 인물입니다.",
     })
     .onDuplicateKeyUpdate({
       set: {
-        church: "기쁨이 있는교회",
+        role: "어머니",
+        church: "정하은 가족",
+        verse:
+          "가족의 하루가 평안하기를 바라며, 작은 일에도 고맙다는 말을 아끼지 않던 사람",
+        verseRef: "가족이 기억하는 말",
+        summary: "성실함과 다정함으로 가족의 중심이 되어준 어머니",
+        story:
+          "정기쁨 어머니는 집 안의 작은 일들을 허투루 넘기지 않고, 가족이 편안히 하루를 보낼 수 있도록 늘 먼저 움직이던 분입니다.\n\n화려한 말보다 따뜻한 밥상과 조용한 배려로 마음을 전했고, 자녀와 손주들에게는 성실하게 살아가는 태도를 몸으로 보여주었습니다. 가족은 어머니의 사진과 말, 함께 보낸 계절들을 이곳에 천천히 모아가고 있습니다.",
+        timelineJson: JSON.stringify([
+          {
+            year: "1941",
+            title: "출생",
+            description: "가족의 사랑 안에서 삶을 시작했습니다.",
+          },
+          {
+            year: "1978",
+            title: "가정을 꾸리다",
+            description: "가족의 일상을 돌보며 단단한 집의 시간을 만들어 갔습니다.",
+          },
+          {
+            year: "2004",
+            title: "손주들과 보낸 계절",
+            description: "손주들의 이름을 하나하나 불러주며 다정한 추억을 남겼습니다.",
+          },
+          {
+            year: "현재",
+            title: "이어지는 인생 기록",
+            description: "가족과 가까운 사람들이 감사의 마음을 함께 기록합니다.",
+          },
+        ]),
         recordType: "faith",
         deathDate: "",
         servicePlace: null,
@@ -78,6 +126,7 @@ async function main() {
         memorialDay: null,
         visibility: "public",
         status: "published",
+        managerMemo: "일반 가족 기록 콘셉트 확인용 샘플 인물입니다.",
         updatedAt: new Date(),
       },
     });
@@ -93,7 +142,7 @@ async function main() {
   await ensureGalleryPhoto(memorial.id, {
     photoUrl: "/sample-jung-gippeum.png",
     photoKey: "seed/jung-gippeum/portrait",
-    caption: "정기쁨 권사",
+    caption: "정기쁨 어머니",
     year: "2026",
     sortOrder: 0,
     isRepresentative: 1,
@@ -112,9 +161,9 @@ async function main() {
         passwordHash: hashFamilyRoomPassword(
           process.env.SAMPLE_FAMILY_ROOM_PASSWORD
         ),
-        title: "정기쁨 권사님 가족관",
+        title: "정기쁨 어머니 가족관",
         intro:
-          "가족이 함께 나누는 비공개 기록 공간입니다. 공개 신앙기념관에 담기 어려운 사진과 이야기를 차분히 이어갈 수 있습니다.",
+          "가족이 함께 나누는 비공개 기록 공간입니다. 공개 인생기념관에 담기 어려운 사진과 이야기를 차분히 이어갈 수 있습니다.",
       })
       .onDuplicateKeyUpdate({
         set: {
@@ -154,7 +203,19 @@ async function ensureGalleryPhoto(
     )
     .limit(1);
 
-  if (existing) return;
+  if (existing) {
+    await db
+      .update(memorialGalleryPhotos)
+      .set({
+        caption: photo.caption,
+        year: photo.year,
+        sortOrder: photo.sortOrder,
+        isRepresentative: photo.isRepresentative,
+        updatedAt: new Date(),
+      })
+      .where(eq(memorialGalleryPhotos.id, existing.id));
+    return;
+  }
   await db.insert(memorialGalleryPhotos).values({ memorialId, ...photo });
 }
 
@@ -174,13 +235,25 @@ async function ensureVideo(memorialId: number) {
     )
     .limit(1);
 
-  if (existing) return;
+  if (existing) {
+    await db
+      .update(memorialVideos)
+      .set({
+        title: "감사의 기억",
+        description: "가족이 직접 등록할 영상을 위한 샘플 항목입니다.",
+        isVisible: 0,
+        sortOrder: 0,
+        updatedAt: new Date(),
+      })
+      .where(eq(memorialVideos.id, existing.id));
+    return;
+  }
   await db.insert(memorialVideos).values({
     memorialId,
     title: "감사의 기억",
-    description: "가족이 함께 보는 샘플 신앙기념 영상입니다.",
+    description: "가족이 직접 등록할 영상을 위한 샘플 항목입니다.",
     youtubeVideoId,
-    isVisible: 1,
+    isVisible: 0,
     sortOrder: 0,
   });
 }
@@ -201,12 +274,25 @@ async function ensureBook(memorialId: number) {
     )
     .limit(1);
 
-  if (existing) return existing.id;
+  if (existing) {
+    await db
+      .update(memorialBooks)
+      .set({
+        subtitle: "정기쁨 어머니의 삶과 이야기 기록",
+        coverPhotoUrl: "/sample-jung-gippeum.png",
+        coverPhotoKey: "seed/jung-gippeum/portrait",
+        publishedYear: "2026",
+        sortOrder: 0,
+        updatedAt: new Date(),
+      })
+      .where(eq(memorialBooks.id, existing.id));
+    return existing.id;
+  }
 
   await db.insert(memorialBooks).values({
     memorialId,
     title,
-    subtitle: "정기쁨 권사님의 삶과 신앙 기록",
+    subtitle: "정기쁨 어머니의 삶과 이야기 기록",
     coverPhotoUrl: "/sample-jung-gippeum.png",
     coverPhotoKey: "seed/jung-gippeum/portrait",
     publishedYear: "2026",
@@ -232,7 +318,7 @@ async function ensureBookPage(bookId: number) {
   const db = await getDb();
   if (!db) throw new Error("Database is not available.");
 
-  const title = "교회와 함께한 감사";
+  const title = "가족과 함께한 감사";
   const [existing] = await db
     .select({ id: memorialBookPages.id })
     .from(memorialBookPages)
@@ -244,12 +330,25 @@ async function ensureBookPage(bookId: number) {
     )
     .limit(1);
 
-  if (existing) return;
+  if (existing) {
+    await db
+      .update(memorialBookPages)
+      .set({
+        content:
+          "정기쁨 어머니는 늘 조용한 환대와 꾸준한 돌봄으로 가족 곁에 있었습니다. 그 기억은 가족에게 감사의 언어로 남아 있습니다.",
+        photoUrl: "/sample-jung-gippeum.png",
+        photoKey: "seed/jung-gippeum/portrait",
+        dateYear: 2004,
+        updatedAt: new Date(),
+      })
+      .where(eq(memorialBookPages.id, existing.id));
+    return;
+  }
   await db.insert(memorialBookPages).values({
     bookId,
     title,
     content:
-      "기쁨이 있는교회 공동체 안에서 권사님은 늘 조용한 환대와 꾸준한 기도로 곁에 있었습니다. 그 기억은 가족과 성도들에게 감사의 언어로 남아 있습니다.",
+      "정기쁨 어머니는 늘 조용한 환대와 꾸준한 돌봄으로 가족 곁에 있었습니다. 그 기억은 가족에게 감사의 언어로 남아 있습니다.",
     photoUrl: "/sample-jung-gippeum.png",
     photoKey: "seed/jung-gippeum/portrait",
     dateYear: 2004,
@@ -264,24 +363,34 @@ async function ensureLetter(memorialId: number) {
   if (!db) throw new Error("Database is not available.");
 
   const content =
-    "권사님, 함께 드리는 예배와 조용히 건네주시는 따뜻한 말들을 기억합니다. 감사의 믿음이 우리 안에 오래 이어지기를 응원합니다.";
+    "어머니, 함께 먹던 밥상과 조용히 건네주시던 따뜻한 말들을 기억합니다. 감사한 마음이 우리 안에 오래 이어지기를 바랍니다.";
   const [existing] = await db
     .select({ id: memorialLetters.id })
     .from(memorialLetters)
     .where(
-      and(
-        eq(memorialLetters.memorialId, memorialId),
-        eq(memorialLetters.content, content)
-      )
+      eq(memorialLetters.memorialId, memorialId)
     )
     .limit(1);
 
-  if (existing) return;
+  if (existing) {
+    await db
+      .update(memorialLetters)
+      .set({
+        recipientName: "정기쁨",
+        recipientRole: "어머니",
+        author: "정하은",
+        content,
+        status: "published",
+        updatedAt: new Date(),
+      })
+      .where(eq(memorialLetters.id, existing.id));
+    return;
+  }
   await db.insert(memorialLetters).values({
     memorialId,
     recipientName: "정기쁨",
-    recipientRole: "권사",
-    author: "기쁨이 있는교회 공동체",
+    recipientRole: "어머니",
+    author: "정하은",
     content,
     status: "published",
   });

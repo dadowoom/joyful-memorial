@@ -7,8 +7,8 @@ import {
   Bell,
   BookOpenText,
   CalendarDays,
-  Church,
   LockKeyhole,
+  MapPin,
   Mail,
   Phone,
   Send,
@@ -103,14 +103,14 @@ export default function MemorialPublicDetail() {
   const portraitPhoto =
     photos.find(photo => photo.isRepresentative === 1)?.photoUrl ??
     photos[0]?.photoUrl;
-  const isFaithMemorial =
+  const isLifeMemorial =
     memorial?.recordType === "faith" ||
     (memorial && !memorial.deathDate?.trim());
 
   useEffect(() => {
-    if (!memorial || !isFaithMemorial) return;
+    if (!memorial || !isLifeMemorial) return;
     setLocation(`/memorial/${memorial.slug}/archive`);
-  }, [isFaithMemorial, memorial, setLocation]);
+  }, [isLifeMemorial, memorial, setLocation]);
 
   return (
     <div
@@ -133,8 +133,8 @@ export default function MemorialPublicDetail() {
           />
         ) : memorialQuery.isError || !memorial ? (
           <CenteredState>기념관을 찾을 수 없습니다.</CenteredState>
-        ) : isFaithMemorial ? (
-          <CenteredState>신앙기념관으로 이동하고 있습니다.</CenteredState>
+        ) : isLifeMemorial ? (
+          <CenteredState>인생기념관으로 이동하고 있습니다.</CenteredState>
         ) : (
           <MemorialContent
             memorial={memorial}
@@ -186,7 +186,7 @@ function PrivateMemorialGate({
             <div className="mb-8 flex items-center gap-3">
               <span className="h-px w-8 bg-[#18181b]" />
               <p className="text-[11px] font-medium uppercase tracking-[0.28em] text-[#616161]">
-                {isMemorialHall ? "Private Memorial" : "Private Faith Memorial"}
+                {isMemorialHall ? "Private Memorial" : "Private Life Memorial"}
               </p>
             </div>
 
@@ -246,7 +246,7 @@ function PrivateMemorialGate({
               }
             >
               <span className="mt-3 block cursor-pointer text-center text-xs text-[#616161] underline-offset-4 hover:underline">
-                {isMemorialHall ? "추모관 검색으로 돌아가기" : "목록으로 돌아가기"}
+                {isMemorialHall ? "추모 기록 검색으로 돌아가기" : "목록으로 돌아가기"}
               </span>
             </Link>
           </form>
@@ -286,7 +286,7 @@ function MemorialContent({
           <Link href="/memorial/search">
             <button className="mb-10 inline-flex h-10 items-center gap-2 border border-[#e6ded1] bg-white px-4 text-sm text-[#4f4638] transition-colors hover:bg-[#faf9f7]">
               <ArrowLeft className="h-4 w-4" strokeWidth={1.6} />
-              추모관 목록
+              추모 기록 목록
             </button>
           </Link>
 
@@ -315,7 +315,7 @@ function MemorialContent({
                 {memorial.role}
               </p>
               <p className="mt-2 text-sm" style={{ color: mutedText }}>
-                {memorial.church} 온라인 추모관
+                {memorial.church} 추모 기록
               </p>
 
               <div
@@ -332,8 +332,8 @@ function MemorialContent({
 
               <div className="mt-10 grid max-w-xl grid-cols-1 gap-px overflow-hidden border border-[#e6ded1] bg-[#e6ded1] sm:grid-cols-3">
                 <HeroFact label="출생" value={memorial.birthDate} />
-                <HeroFact label="소천" value={memorial.deathDate} />
-                <HeroFact label="교회" value={memorial.church} />
+                <HeroFact label="별세" value={memorial.deathDate} />
+                <HeroFact label="가족" value={memorial.church} />
               </div>
 
               <div className="mt-8 flex flex-col gap-3 sm:flex-row sm:flex-wrap">
@@ -348,7 +348,7 @@ function MemorialContent({
                   className="inline-flex h-11 items-center justify-center gap-2 border border-[#1f1d1a] bg-white px-5 text-sm font-medium text-[#1f1d1a] transition-colors hover:bg-[#faf9f7]"
                 >
                   <Mail className="h-4 w-4" strokeWidth={1.7} />
-                  편지 남기기
+                  마음글 남기기
                 </a>
                 <a
                   href="#life"
@@ -391,9 +391,9 @@ function MemorialContent({
       <section id="life" className="py-20 md:py-28">
         <div className="container">
           <SectionHeader
-            eyebrow="Life And Faith"
-            title="삶과 신앙의 기록"
-            description="가족과 교회가 기억하는 따뜻한 여정을 조용히 담았습니다."
+            eyebrow="Life Story"
+            title="삶과 이야기의 기록"
+            description="가족과 가까운 사람들이 기억하는 따뜻한 여정을 조용히 담았습니다."
           />
 
           <div className="mx-auto grid max-w-6xl gap-8 lg:grid-cols-[minmax(0,0.8fr)_minmax(0,1.2fr)]">
@@ -416,7 +416,7 @@ function MemorialContent({
 
               <section className="border border-[#e6ded1] bg-[#fbfaf8] p-6 md:p-8">
                 <div className="mb-5 flex items-center gap-3">
-                  <Church
+                  <MapPin
                     className="h-5 w-5"
                     style={{ color: warmGold }}
                     strokeWidth={1.6}
@@ -425,7 +425,7 @@ function MemorialContent({
                     className="text-2xl font-light"
                     style={{ ...serifStyle, color: warmText }}
                   >
-                    예배 안내
+                    기일 안내
                   </h2>
                 </div>
                 <div className="space-y-4 text-sm leading-7">
@@ -444,7 +444,7 @@ function MemorialContent({
                     style={{ color: mutedText }}
                   >
                     <Bell className="mt-1 h-4 w-4 shrink-0" strokeWidth={1.6} />
-                    <span>추도일 {memorialDayLabel}</span>
+                    <span>기일 {memorialDayLabel}</span>
                   </p>
                 </div>
 
@@ -586,7 +586,7 @@ function MemorialReminderForm({
     onSuccess: data => {
       setPhone("");
       setConsent(false);
-      setMessage(`${data.memorialDay} 추도일 알림 신청이 저장되었습니다.`);
+      setMessage(`${data.memorialDay} 기일 알림 신청이 저장되었습니다.`);
     },
     onError: error => {
       setMessage(error.message || "알림 신청 중 문제가 생겼습니다.");
@@ -603,7 +603,7 @@ function MemorialReminderForm({
     }
 
     if (!consent) {
-      setMessage("추도일 알림을 위한 번호 저장에 동의해주세요.");
+      setMessage("기일 알림을 위한 번호 저장에 동의해주세요.");
       return;
     }
 
@@ -628,10 +628,10 @@ function MemorialReminderForm({
         />
         <div>
           <p className="text-sm font-medium" style={{ color: warmText }}>
-            추도일 알림 받기
+            기일 알림 받기
           </p>
           <p className="mt-1 text-xs leading-5" style={{ color: mutedText }}>
-            휴대폰 번호를 남기면 {memorialDay} 추도일 안내를 받을 수 있습니다.
+            휴대폰 번호를 남기면 {memorialDay} 기일 안내를 받을 수 있습니다.
           </p>
         </div>
       </div>
@@ -656,7 +656,7 @@ function MemorialReminderForm({
             className="mt-1"
           />
           <span>
-            추도일 알림 신청을 위해 휴대폰 번호를 저장하는 데 동의합니다.
+            기일 알림 신청을 위해 휴대폰 번호를 저장하는 데 동의합니다.
           </span>
         </label>
         <button
@@ -729,7 +729,7 @@ function MemorialPortrait({
                 className="text-[11px] font-medium uppercase tracking-[0.28em]"
                 style={{ color: warmGold }}
               >
-                In Memoriam
+                In Memory
               </p>
             </div>
             <div className="relative">
@@ -871,7 +871,7 @@ function MemorialLetters({
     onSuccess: async () => {
       setAuthor("");
       setContent("");
-      setMessage("편지가 남겨졌습니다.");
+      setMessage("마음글이 남겨졌습니다.");
       await Promise.all([
         utils.letter.byMemorial.invalidate(queryInput),
         utils.letter.recent.invalidate(),
@@ -885,7 +885,7 @@ function MemorialLetters({
     const trimmedContent = content.trim();
 
     if (!trimmedAuthor || !trimmedContent) {
-      setMessage("이름과 편지 내용을 모두 입력해주세요.");
+      setMessage("이름과 마음글 내용을 모두 입력해주세요.");
       return;
     }
 
@@ -903,7 +903,7 @@ function MemorialLetters({
       <div className="container">
         <SectionHeader
           eyebrow="Letters"
-          title="하늘로 보내는 편지"
+          title="가족의 마음글"
           description={`${memorialName}님께 전하고 싶은 마음을 남겨주세요.`}
         />
 
@@ -949,15 +949,15 @@ function MemorialLetters({
               <p className="text-xs leading-6" style={{ color: mutedText }}>
                 {message ||
                   (isPrivate
-                    ? "비공개 추모관에만 보관되며 전체 편지 목록에는 표시되지 않습니다."
-                    : "남겨진 편지는 하늘로 보내는 편지에 함께 모입니다.")}
+                    ? "비공개 기념관에만 보관되며 전체 마음글 목록에는 표시되지 않습니다."
+                    : "남겨진 글은 가족의 마음글에 함께 모입니다.")}
               </p>
               <button
                 type="submit"
                 disabled={createLetterMutation.isPending}
                 className="inline-flex h-11 items-center justify-center gap-2 bg-[#1f1d1a] px-5 text-sm font-medium text-white transition-colors hover:bg-[#33302b] disabled:cursor-not-allowed disabled:opacity-50"
               >
-                {createLetterMutation.isPending ? "남기는 중" : "편지 남기기"}
+                {createLetterMutation.isPending ? "남기는 중" : "마음글 남기기"}
                 <Send className="h-4 w-4" strokeWidth={1.7} />
               </button>
             </div>
@@ -969,7 +969,7 @@ function MemorialLetters({
                 className="border-b border-[#e6ded1] py-7 text-sm"
                 style={{ color: mutedText }}
               >
-                편지를 불러오고 있습니다.
+                마음글을 불러오고 있습니다.
               </p>
             ) : lettersQuery.data?.length ? (
               lettersQuery.data.map(letter => (
@@ -1001,7 +1001,7 @@ function MemorialLetters({
                 className="border-b border-[#e6ded1] py-7 text-sm"
                 style={{ color: mutedText }}
               >
-                아직 남겨진 편지가 없습니다.
+                아직 남겨진 마음글이 없습니다.
               </p>
             )}
           </div>
@@ -1012,7 +1012,7 @@ function MemorialLetters({
                 className="inline-flex h-11 items-center justify-center border border-[#e6ded1] bg-white px-5 text-sm font-medium transition-colors hover:bg-[#faf9f7]"
                 style={{ color: "#4f4638" }}
               >
-                모든 편지 보기
+                모든 마음글 보기
               </span>
             </Link>
           </div>

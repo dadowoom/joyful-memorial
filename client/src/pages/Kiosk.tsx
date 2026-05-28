@@ -136,10 +136,10 @@ export default function Kiosk() {
               className="block text-[26px] font-normal leading-tight"
               style={serifStyle}
             >
-              기쁨의 기억
+              기쁨이 있는 곳
             </span>
             <span className="mt-1 block text-sm text-[#777]">
-              기쁨이 있는교회 추모관
+              인생기념관 키오스크
             </span>
           </button>
         </header>
@@ -149,7 +149,7 @@ export default function Kiosk() {
             className="text-[42px] font-normal leading-[1.2]"
             style={serifStyle}
           >
-            고인 성함 검색
+            가족 성함 검색
           </h1>
           <p className="mt-4 text-base leading-7 text-[#616161]">
             성함을 입력한 뒤 검색 버튼을 눌러 주세요.
@@ -207,7 +207,7 @@ export default function Kiosk() {
           ) : memorialsQuery.isError ? (
             <EmptyPanel title="검색을 완료하지 못했습니다." />
           ) : results.length === 0 ? (
-            <EmptyPanel title="일치하는 추모관이 없습니다." />
+            <EmptyPanel title="일치하는 기념관이 없습니다." />
           ) : (
             <div className="h-full overflow-y-auto border-t border-[#dbdad7]">
               <div className="flex items-center justify-between px-8 py-4">
@@ -307,7 +307,7 @@ function PrivateAccessPanel({
           <div>
             <p className="mb-4 inline-flex items-center gap-2 text-sm font-medium text-[#616161]">
               <LockKeyhole className="h-4 w-4" />
-              비공개 추모관
+              비공개 기념관
             </p>
             <h2 className="text-4xl font-normal" style={serifStyle}>
               {memorial.name}

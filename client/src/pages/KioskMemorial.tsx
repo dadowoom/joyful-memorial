@@ -183,7 +183,7 @@ export default function KioskMemorial() {
         <KioskMemorialHeader onBack={() => setLocation("/kiosk")} />
 
         {memorialQuery.isLoading ? (
-          <KioskState>추모관을 불러오고 있습니다.</KioskState>
+          <KioskState>기념관을 불러오고 있습니다.</KioskState>
         ) : isLocked ? (
           <KioskMemorialGate
             slug={slug}
@@ -195,7 +195,7 @@ export default function KioskMemorial() {
             }}
           />
         ) : memorialQuery.isError || !memorial ? (
-          <KioskState>추모관을 찾을 수 없습니다.</KioskState>
+          <KioskState>기념관을 찾을 수 없습니다.</KioskState>
         ) : (
           <>
             <KioskMemorialContent
@@ -238,10 +238,10 @@ function KioskMemorialHeader({ onBack }: { onBack: () => void }) {
       <div className="flex items-center justify-between gap-5">
         <button type="button" onClick={onBack} className="text-left">
           <span className="block text-[24px] leading-tight" style={serifStyle}>
-            기쁨의 기억
+            기쁨이 있는 곳
           </span>
           <span className="mt-1 block text-sm text-[#777]">
-            키오스크 추모관
+            키오스크 인생기념관
           </span>
         </button>
         <button
@@ -285,7 +285,7 @@ function KioskMemorialContent({
     { id: "video", label: "영상" },
     { id: "book", label: "기록" },
     { id: "family", label: "가족관" },
-    { id: "letters", label: "편지" },
+    { id: "letters", label: "마음글" },
   ];
 
   return (
@@ -331,8 +331,8 @@ function KioskMemorialContent({
 
         <div className="mt-8 grid grid-cols-3 border border-[#dedbd5]">
           <Fact label="출생" value={memorial.birthDate} />
-          <Fact label="소천" value={memorial.deathDate} />
-          <Fact label="교회" value={memorial.church} />
+          <Fact label="별세" value={memorial.deathDate} />
+          <Fact label="가족" value={memorial.church} />
         </div>
 
         <div className="mt-7 grid grid-cols-3 gap-2">
@@ -349,7 +349,7 @@ function KioskMemorialContent({
         </div>
       </section>
 
-      <KioskSection id="story" eyebrow="Story" title="삶과 신앙">
+      <KioskSection id="story" eyebrow="Story" title="삶과 이야기">
         {memorial.verse && (
           <article className="border border-[#dedbd5] p-6">
             <p className="text-[22px] leading-10" style={serifStyle}>
@@ -380,7 +380,7 @@ function KioskMemorialContent({
         <article className="mt-4 border border-[#dedbd5] p-6">
           <div className="flex items-center gap-3">
             <CalendarDays className="h-5 w-5" />
-            <p className="text-lg font-medium">추도일</p>
+            <p className="text-lg font-medium">기일</p>
           </div>
           <p className="mt-4 text-base text-[#64615d]">
             {formatMemorialDay(memorial.memorialDay)}
@@ -576,7 +576,7 @@ function KioskMemorialGate({
           PRIVATE MEMORIAL
         </p>
         <h1 className="text-[44px] leading-tight" style={serifStyle}>
-          {status?.name || "비공개 추모관"}
+          {status?.name || "비공개 기념관"}
         </h1>
         {status && (
           <p className="mt-4 text-base leading-7 text-[#64615d]">
@@ -719,7 +719,7 @@ function KioskLettersSection({
     onSuccess: async () => {
       setAuthor("");
       setContent("");
-      setMessage("편지가 남겨졌습니다.");
+      setMessage("마음글이 남겨졌습니다.");
       await Promise.all([
         utils.letter.byMemorial.invalidate(queryInput),
         utils.letter.recent.invalidate(),
@@ -746,7 +746,7 @@ function KioskLettersSection({
   const letters = (lettersQuery.data ?? []) as MemorialLetter[];
 
   return (
-    <KioskSection id="letters" eyebrow="Letters" title="하늘로 보내는 편지">
+    <KioskSection id="letters" eyebrow="Letters" title="가족의 마음글">
       <form onSubmit={submit} className="border border-[#dedbd5]">
         <div className="border-b border-[#dedbd5] p-5">
           <p className="text-sm text-[#7a643e]">To {memorialName}</p>
@@ -774,15 +774,15 @@ function KioskLettersSection({
           <p className="mb-4 text-sm leading-6 text-[#64615d]">
             {message ||
               (isPrivate
-                ? "비공개 추모관 안에서만 보관됩니다."
-                : "남겨진 편지는 하늘로 보내는 편지에 함께 모입니다.")}
+                ? "비공개 기념관 안에서만 보관됩니다."
+                : "남겨진 글은 가족의 마음글에 함께 모입니다.")}
           </p>
           <button
             type="submit"
             disabled={createLetter.isPending}
             className="flex h-14 w-full items-center justify-center gap-2 bg-[#18181b] text-base font-medium text-white disabled:opacity-50"
           >
-            {createLetter.isPending ? "남기는 중" : "편지 남기기"}
+            {createLetter.isPending ? "남기는 중" : "마음글 남기기"}
             <Send className="h-4 w-4" />
           </button>
         </div>
@@ -791,7 +791,7 @@ function KioskLettersSection({
       <div className="mt-5 border-t border-[#dedbd5]">
         {lettersQuery.isLoading ? (
           <p className="border-b border-[#dedbd5] py-5 text-base text-[#64615d]">
-            편지를 불러오고 있습니다.
+            마음글을 불러오고 있습니다.
           </p>
         ) : letters.length ? (
           letters.slice(0, 4).map(letter => (
@@ -809,7 +809,7 @@ function KioskLettersSection({
           ))
         ) : (
           <p className="border-b border-[#dedbd5] py-5 text-base text-[#64615d]">
-            아직 남겨진 편지가 없습니다.
+            아직 남겨진 마음글이 없습니다.
           </p>
         )}
       </div>

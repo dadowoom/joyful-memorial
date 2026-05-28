@@ -25,47 +25,47 @@ const gold = "#b08a4b";
 const VALUES = [
   {
     title: "기쁨",
-    desc: "한 사람의 믿음이 오늘도 가족과 교회 안에서 기쁨으로 이어지도록 밝게 기록합니다.",
+    desc: "부모님이 남긴 웃음과 다정한 순간이 가족 안에서 오래 이어지도록 기록합니다.",
   },
   {
     title: "감사",
-    desc: "함께 예배하고 섬겼던 시간을 감사의 언어로 정리해 다음 세대가 다시 읽을 수 있게 합니다.",
+    desc: "함께 지낸 시간과 고마웠던 마음을 정리해 다음 세대가 다시 읽을 수 있게 합니다.",
   },
   {
-    title: "신앙의 이야기",
-    desc: "사진, 영상, 책장과 연표를 통해 살아 있는 신앙의 여정을 차분히 엮습니다.",
+    title: "삶의 이야기",
+    desc: "사진, 영상, 책장과 연표를 통해 한 사람의 인생을 차분히 엮습니다.",
   },
   {
-    title: "공동체",
-    desc: "가족과 교우가 응원의 마음을 남기며 한 사람의 삶을 함께 세워갑니다.",
+    title: "가족",
+    desc: "가족과 가까운 사람들이 마음을 남기며 한 사람의 삶을 함께 완성해갑니다.",
   },
 ];
 
 const SERVICES = [
   {
     title: "기념관 찾기",
-    desc: "성함으로 등록된 신앙기념관을 찾고, 비공개 공간은 비밀번호 확인 후 입장합니다.",
+    desc: "성함으로 등록된 인생기념관을 찾고, 비공개 공간은 비밀번호 확인 후 입장합니다.",
     icon: Search,
     href: "/memorial-garden#faith-memorials",
   },
   {
-    title: "신앙기념관 만들기",
-    desc: "회원가입 또는 로그인 후 기본 정보, 신앙 이야기, 생애 기록, 사진을 등록합니다.",
+    title: "인생기념관 만들기",
+    desc: "회원가입 또는 로그인 후 기본 정보, 삶의 이야기, 생애 기록, 사진을 등록합니다.",
     icon: PenLine,
     href: "/memorial/create",
   },
   {
-    title: "응원글과 추모 편지",
-    desc: "신앙기념관에는 응원글을, 추모관 전환 이후에는 하늘로 보내는 편지를 남깁니다.",
+    title: "감사글과 마음글",
+    desc: "인생기념관에는 감사글을, 추모 기록 전환 이후에는 가족의 마음글을 남깁니다.",
     icon: Mail,
     href: "/letters",
   },
 ];
 
 const PROCESS = [
-  "인물의 기본 정보와 대표 말씀을 입력합니다.",
-  "삶과 신앙 이야기, 사진, 연표를 차분히 정리합니다.",
-  "공개 범위와 비밀번호를 설정한 뒤 바로 신앙기념관을 공개합니다.",
+  "인물의 기본 정보와 대표 문장을 입력합니다.",
+  "삶의 이야기, 사진, 연표를 차분히 정리합니다.",
+  "공개 범위와 비밀번호를 설정한 뒤 바로 인생기념관을 공개합니다.",
 ];
 
 function formatDate(value: Date | string) {
@@ -119,7 +119,7 @@ export default function Home() {
                 className="text-[11px] font-medium uppercase"
                 style={{ letterSpacing: "0.18em", color: olive }}
               >
-                기쁨이 있는교회
+                기쁨이 있는 곳
               </p>
               <h1
                 className="mt-6 text-5xl font-normal leading-[1.12] sm:text-6xl md:text-7xl"
@@ -127,15 +127,14 @@ export default function Home() {
               >
                 기쁨이 있는 곳
                 <br />
-                신앙기념관
+                인생기념관
               </h1>
               <p
                 className="mt-7 max-w-xl text-base leading-8 md:text-lg"
                 style={{ color: muted }}
               >
-                살아계신 성도의 삶과 믿음, 감사의 흔적을 밝은 신앙기념관으로
-                남깁니다. 가족의 응원과 교회 공동체의 기록이 오늘의 믿음 안에서
-                이어집니다.
+                부모님의 인생과 가족의 기억을 밝은 인생기념관으로 남깁니다.
+                사진, 영상, 글을 통해 평범하지만 소중했던 시간을 오래 보관합니다.
               </p>
 
               <form
@@ -153,7 +152,7 @@ export default function Home() {
                     value={search}
                     onChange={event => setSearch(event.target.value)}
                     className="min-w-0 flex-1 bg-transparent text-base outline-none placeholder:text-[#9c968b]"
-                    placeholder="성함으로 신앙기념관 찾기"
+                    placeholder="성함으로 인생기념관 찾기"
                   />
                   <button
                     type="submit"
@@ -173,7 +172,7 @@ export default function Home() {
                     style={{ background: olive }}
                   >
                     <PenLine className="h-4 w-4" />
-                    신앙기념관 만들기
+                    인생기념관 만들기
                   </button>
                 </Link>
                 <Link href="/letters">
@@ -182,7 +181,7 @@ export default function Home() {
                     style={{ borderColor: line, color: ink }}
                   >
                     <Mail className="h-4 w-4" />
-                    추모관 편지
+                    가족의 마음글
                   </button>
                 </Link>
               </div>
@@ -197,7 +196,7 @@ export default function Home() {
                       {item}
                     </p>
                     <p className="mt-1 text-xs" style={{ color: muted }}>
-                      신앙기념관 안에서 보관
+                      인생기념관 안에서 보관
                     </p>
                   </div>
                 ))}
@@ -220,7 +219,7 @@ export default function Home() {
                   className="mt-4 text-3xl font-normal leading-tight md:text-5xl"
                   style={serifStyle}
                 >
-                  신앙기념관에서
+                  인생기념관에서
                   <br />
                   기억이 이어집니다
                 </h2>
@@ -282,16 +281,16 @@ export default function Home() {
                   className="mt-4 text-3xl font-normal leading-tight md:text-5xl"
                   style={serifStyle}
                 >
-                  밝고 경건한
+                  밝고 따뜻한
                   <br />
-                  신앙기념관
+                  인생기념관
                 </h2>
                 <p
                   className="mt-6 max-w-md text-sm leading-7"
                   style={{ color: muted }}
                 >
-                  기쁨이 있는 곳 신앙기념관은 과한 장식보다 여백을, 어두움보다
-                  감사와 신앙의 이야기를 선택합니다.
+                  기쁨이 있는 곳 인생기념관은 과한 장식보다 여백을, 무거움보다
+                  감사와 삶의 이야기를 선택합니다.
                 </p>
               </div>
 
@@ -333,7 +332,7 @@ export default function Home() {
               >
                 만들고,
                 <br />
-                신앙기념관으로 공개합니다
+                인생기념관으로 공개합니다
               </h2>
             </div>
             <div className="border-t" style={{ borderColor: line }}>
@@ -363,13 +362,13 @@ export default function Home() {
                   className="text-[11px] font-medium uppercase"
                   style={{ letterSpacing: "0.18em", color: olive }}
                 >
-                  Memorial Letters
+                  Family Notes
                 </p>
                 <h2
                   className="mt-4 text-3xl font-normal leading-tight md:text-5xl"
                   style={serifStyle}
                 >
-                  추모관 편지
+                  가족의 마음글
                 </h2>
               </div>
               <Link href="/letters">
@@ -377,7 +376,7 @@ export default function Home() {
                   className="inline-flex h-11 items-center justify-center gap-2 rounded-full border px-4 text-sm font-medium"
                   style={{ borderColor: line, color: ink }}
                 >
-                  편지 보기
+                  마음글 보기
                   <ArrowRight className="h-4 w-4" />
                 </button>
               </Link>
@@ -388,9 +387,9 @@ export default function Home() {
               style={{ background: line }}
             >
               {lettersQuery.isLoading ? (
-                <LetterState text="편지를 불러오고 있습니다." />
+                <LetterState text="마음글을 불러오고 있습니다." />
               ) : letters.length === 0 ? (
-                <LetterState text="아직 남겨진 편지가 없습니다." />
+                <LetterState text="아직 남겨진 마음글이 없습니다." />
               ) : (
                 letters.map(letter => (
                   <Link
@@ -400,7 +399,7 @@ export default function Home() {
                     <article className="h-full min-h-56 bg-white p-6 transition-colors hover:bg-[#fbfaf6]">
                       <div className="mb-8 flex items-center justify-between gap-4">
                         <p className="text-sm" style={{ color: olive }}>
-                          {letter.memorialName || "하늘"}
+                          {letter.memorialName || "마음"}
                         </p>
                         <p className="text-xs" style={{ color: muted }}>
                           {formatDate(letter.createdAt)}
@@ -446,7 +445,7 @@ export default function Home() {
                   className="mt-3 max-w-2xl text-sm leading-7"
                   style={{ color: muted }}
                 >
-                  신앙기념관은 생성 후 바로 공개되며, 이후 사진첩, 영상 기록,
+                  인생기념관은 생성 후 바로 공개되며, 이후 사진첩, 영상 기록,
                   책장과 연표를 계속 보완할 수 있습니다.
                 </p>
               </div>
@@ -457,7 +456,7 @@ export default function Home() {
                 style={{ background: ink }}
               >
                 <BookOpenText className="h-4 w-4" />
-                신앙기념관 만들기
+                인생기념관 만들기
               </button>
             </Link>
           </div>

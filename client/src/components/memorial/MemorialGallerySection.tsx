@@ -160,7 +160,7 @@ export default function MemorialGallerySection({
       <div className="container">
         <SectionHeading
           eyebrow="Photo Gallery"
-          title="신앙의 발걸음"
+          title="삶의 발걸음"
           description="가족이 남긴 사진과 소중한 순간들을 담은 기록입니다."
         />
 
@@ -234,7 +234,7 @@ export default function MemorialGallerySection({
                 >
                   <img
                     src={toImgUrl(photo.photoUrl)}
-                    alt={photo.caption || "추모 사진"}
+                    alt={photo.caption || "기록 사진"}
                     className="h-full w-full object-cover transition-transform duration-700 group-hover:scale-110"
                     style={{ filter: memorialPhotoFilter }}
                   />
@@ -411,7 +411,7 @@ function Lightbox({
       >
         <img
           src={toImgUrl(photo.photoUrl)}
-          alt={photo.caption || "추모 사진"}
+          alt={photo.caption || "기록 사진"}
           className="max-h-[74vh] w-full object-contain"
           style={{ filter: memorialPhotoFilter }}
         />

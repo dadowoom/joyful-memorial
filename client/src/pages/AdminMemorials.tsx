@@ -93,7 +93,7 @@ export default function AdminMemorials() {
                 기념관 관리
               </h1>
               <p className="mt-6 max-w-2xl text-sm leading-7 text-[#616161]">
-                등록된 신앙기념관과 추모관을 확인하고, 기본 정보와 공개 설정을
+                등록된 인생기념관과 추모 기록을 확인하고, 기본 정보와 공개 설정을
                 정리합니다.
               </p>
             </div>
@@ -114,7 +114,7 @@ export default function AdminMemorials() {
                 <input
                   value={query}
                   onChange={event => setQuery(event.target.value)}
-                  placeholder="성함, 직분, 교회, 연락처로 찾기"
+                  placeholder="성함, 호칭, 가족, 연락처로 찾기"
                   className="h-9 min-w-0 flex-1 bg-transparent text-sm outline-none placeholder:text-[#9a9a9a]"
                 />
               </label>
@@ -122,7 +122,7 @@ export default function AdminMemorials() {
               <Link href="/memorial/create">
                 <button className="inline-flex h-12 items-center justify-center gap-2 bg-[#18181b] px-5 text-sm font-medium text-white transition-opacity hover:opacity-90">
                   <Plus className="h-4 w-4" strokeWidth={1.7} />
-                  새 신앙기념관
+                  새 인생기념관
                 </button>
               </Link>
             </div>
@@ -138,7 +138,7 @@ export default function AdminMemorials() {
                 <div className="hidden grid-cols-[150px_1.1fr_0.9fr_0.8fr_0.8fr_178px] border-b border-[#dbdad7] bg-[#f8f7f4] px-5 py-3 text-[11px] font-medium uppercase tracking-[0.2em] text-[#777] lg:grid">
                   <span>Year</span>
                   <span>Name</span>
-                  <span>Church</span>
+                  <span>Family</span>
                   <span>Visibility</span>
                   <span>Updated</span>
                   <span className="text-right">Action</span>
@@ -166,8 +166,8 @@ export default function AdminMemorials() {
                         <p className="mt-1 text-sm text-[#616161]">
                           {memorial.role} ·{" "}
                           {memorial.recordType === "memorial"
-                            ? "추모관"
-                            : "신앙기념관"}
+                            ? "추모 기록"
+                            : "인생기념관"}
                         </p>
                       </div>
 

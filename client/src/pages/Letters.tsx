@@ -80,7 +80,7 @@ export default function Letters() {
       setRecipientName("");
       setAuthor("");
       setContent("");
-      setMessage("편지가 남겨졌습니다.");
+      setMessage("마음글이 남겨졌습니다.");
       await utils.letter.recent.invalidate();
     },
     onError: error => setMessage(error.message),
@@ -156,21 +156,20 @@ export default function Letters() {
                   className="mb-5 text-[11px] font-medium uppercase tracking-[0.28em]"
                   style={{ color: warmGold }}
                 >
-                  Letters
+                  Family Notes
                 </p>
                 <h1
                   className="max-w-3xl text-5xl font-light leading-[1.12] md:text-7xl"
                   style={{ ...serifStyle, color: warmText }}
                 >
-                  하늘로 보내는 편지
+                  가족의 마음글
                 </h1>
               </div>
 
               <div className="border-l border-[#e6ded1] pl-0 lg:pl-8">
                 <p className="text-base leading-8" style={{ color: mutedText }}>
-                  고인에게 하고 싶은 이야기를 적어 하늘로 보내세요.
-                  추모관에 남겨진 편지와 이곳에서 직접 남긴 편지가 함께
-                  모입니다.
+                  부모님과 가족에게 전하고 싶은 마음을 남겨보세요.
+                  기념관에 남겨진 글과 이곳에서 직접 남긴 글이 함께 모입니다.
                 </p>
                 <button
                   type="button"
@@ -178,7 +177,7 @@ export default function Letters() {
                   className="mt-7 inline-flex h-11 items-center justify-center gap-2 bg-[#1f1d1a] px-5 text-sm font-medium text-white transition-colors hover:bg-[#33302b]"
                 >
                   <PenLine className="h-4 w-4" strokeWidth={1.7} />
-                  추모글 등록하기
+                  마음글 등록하기
                 </button>
               </div>
             </div>
@@ -193,7 +192,7 @@ export default function Letters() {
                   <input
                     value={query}
                     onChange={event => updateQuery(event.target.value)}
-                    placeholder="고인, 작성자, 내용으로 찾기"
+                    placeholder="가족, 작성자, 내용으로 찾기"
                     className="h-10 min-w-0 flex-1 bg-transparent text-base text-[#121212] outline-none placeholder:text-[#9a9a9a]"
                   />
                 </label>
@@ -201,7 +200,7 @@ export default function Letters() {
               <div className="grid grid-cols-4 border border-[#dbdad7] sm:flex">
                 {[
                   ["all", "전체"],
-                  ["to", "고인"],
+                  ["to", "가족"],
                   ["content", "내용"],
                   ["author", "작성자"],
                 ].map(([value, label]) => (
@@ -263,7 +262,7 @@ export default function Letters() {
                     className="text-xs font-medium uppercase tracking-[0.16em]"
                     style={{ color: warmGold }}
                   >
-                    Letter
+                    Note
                   </span>
                   <textarea
                     value={content}
@@ -277,14 +276,14 @@ export default function Letters() {
                 <div className="flex flex-col justify-between gap-3 border-t border-[#e6ded1] bg-[#fbfaf8] p-5 sm:flex-row sm:items-center">
                   <p className="text-xs leading-6" style={{ color: mutedText }}>
                     {message ||
-                      "이곳에서 남긴 편지도 추모관 편지와 함께 모입니다."}
+                      "이곳에서 남긴 글도 가족의 마음글에 함께 모입니다."}
                   </p>
                   <button
                     type="submit"
                     disabled={createLetter.isPending}
                     className="inline-flex h-11 items-center justify-center gap-2 bg-[#1f1d1a] px-5 text-sm font-medium text-white transition-colors hover:bg-[#33302b] disabled:cursor-not-allowed disabled:opacity-50"
                   >
-                    {createLetter.isPending ? "남기는 중" : "편지 남기기"}
+                    {createLetter.isPending ? "남기는 중" : "마음글 남기기"}
                     <Send className="h-4 w-4" strokeWidth={1.7} />
                   </button>
                 </div>
@@ -299,27 +298,27 @@ export default function Letters() {
               <p className="text-sm text-[#616161]">
                 {lettersQuery.isLoading
                   ? "불러오는 중"
-                  : `최근 편지 ${results.length}건`}
+                  : `최근 마음글 ${results.length}건`}
               </p>
               <Link href="/memorial/search">
                 <button className="h-10 border border-[#dbdad7] px-4 text-sm text-[#121212] transition-colors hover:bg-[#f6f5f2]">
-                  추모관
+                  기념관 검색
                 </button>
               </Link>
             </div>
 
             {lettersQuery.isLoading ? (
-              <StateBox text="편지를 불러오고 있습니다." />
+              <StateBox text="마음글을 불러오고 있습니다." />
             ) : lettersQuery.isError ? (
-              <StateBox text="편지를 불러오지 못했습니다." />
+              <StateBox text="마음글을 불러오지 못했습니다." />
             ) : visibleLetters.length === 0 ? (
-              <StateBox text="아직 남겨진 편지가 없습니다." />
+              <StateBox text="아직 남겨진 마음글이 없습니다." />
             ) : (
               <div className="grid gap-7 md:grid-cols-2 md:gap-x-9 md:gap-y-10">
                 {visibleLetters.map((letter, index) => {
                   const serial =
                     results.length - ((safePage - 1) * pageSize + index);
-                  const toName = letter.memorialName ?? "하늘";
+                  const toName = letter.memorialName ?? "마음";
                   const toRole = letter.memorialRole ?? "";
 
                   return (
@@ -461,7 +460,7 @@ function LetterCard({
           {href ? (
             <Link href={href}>
               <span className="inline-flex items-center gap-1 text-xs font-medium text-[#7f673d] transition-colors hover:text-[#2d2b28]">
-                추모관 보기
+                기념관 보기
                 <ArrowRight className="h-3.5 w-3.5" strokeWidth={1.7} />
               </span>
             </Link>

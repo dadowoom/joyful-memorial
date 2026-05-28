@@ -207,7 +207,7 @@ export default function MemorialVideoSection({
 
             <div className="flex flex-col justify-center p-6 md:p-9">
               <p className="text-sm leading-7 text-[#6f6a61]">
-                사진과 글로 다 담기 어려운 고인의 표정과 목소리를 함께
+                사진과 글로 다 담기 어려운 가족의 표정과 목소리를 함께
                 기억할 수 있도록 영상 기록을 준비하는 공간입니다.
               </p>
               <div className="mt-8 border-t border-[#e6ded1] pt-6">

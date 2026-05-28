@@ -67,7 +67,7 @@ const initialForm: MemorialForm = {
   birthDate: "",
   deathDate: "",
   recordType: "faith",
-  church: "기쁨이 있는교회",
+  church: "우리 가족",
   familyContact: "",
   familyPhone: "",
   slug: "",
@@ -83,7 +83,7 @@ const initialForm: MemorialForm = {
 
 const requiredFields: Array<{ key: keyof MemorialForm; label: string }> = [
   { key: "name", label: "성함" },
-  { key: "role", label: "직분" },
+  { key: "role", label: "호칭" },
   { key: "birthDate", label: "출생일" },
   { key: "summary", label: "한 줄 소개" },
   { key: "story", label: "삶의 기록" },
@@ -97,7 +97,7 @@ const visibilityOptions: Array<{
   {
     value: "public",
     label: "전체 공개",
-    desc: "누구나 신앙기념관에 들어갈 수 있습니다.",
+    desc: "누구나 인생기념관에 들어갈 수 있습니다.",
   },
   {
     value: "private",
@@ -297,7 +297,7 @@ export default function MemorialCreate() {
 
     if (form.visibility === "private" && !form.accessPassword.trim()) {
       nextErrors.accessPassword =
-        "비공개 신앙기념관 입장 비밀번호를 입력해 주세요.";
+        "비공개 인생기념관 입장 비밀번호를 입력해 주세요.";
     }
 
     setErrors(nextErrors);
@@ -317,7 +317,7 @@ export default function MemorialCreate() {
     }
 
     try {
-      setNotice("신앙기념관을 생성하고 있습니다.");
+      setNotice("인생기념관을 생성하고 있습니다.");
       const created = await createMemorialMutation.mutateAsync({
         ...form,
         slug: slugPreview,
@@ -349,7 +349,7 @@ export default function MemorialCreate() {
 
       localStorage.removeItem(draftKey);
       setCreatedMemorial(created);
-      setNotice("신앙기념관이 생성되었습니다. 바로 확인할 수 있습니다.");
+      setNotice("인생기념관이 생성되었습니다. 바로 확인할 수 있습니다.");
       setSubmitted(true);
     } catch (error) {
       console.error("[Memorial Create] Failed to save", error);
@@ -381,7 +381,7 @@ export default function MemorialCreate() {
         <main className="container pt-32">
           <div className="border border-[#dbdad7] py-20 text-center">
             <p className="text-sm text-[#616161]">
-              회원가입 또는 로그인 후 신앙기념관을 생성할 수 있습니다.
+              회원가입 또는 로그인 후 인생기념관을 생성할 수 있습니다.
             </p>
           </div>
         </main>
@@ -398,7 +398,7 @@ export default function MemorialCreate() {
           <div className="container grid gap-10 py-12 md:py-16 lg:grid-cols-[minmax(0,0.95fr)_minmax(320px,1.05fr)]">
             <div>
               <p className="mb-5 text-xs font-medium text-[#616161]">
-                신앙기념관 만들기
+                인생기념관 만들기
               </p>
               <h1
                 className="text-4xl font-normal leading-tight md:text-6xl"
@@ -410,10 +410,10 @@ export default function MemorialCreate() {
               </h1>
               <p className="mt-6 max-w-md text-sm leading-7 text-[#616161]">
                 <span className="block">
-                  사랑하는 분의 삶과 믿음을 조용히 담아
+                  사랑하는 분의 삶과 이야기를 조용히 담아
                 </span>
                 <span className="block">
-                  가족과 교회가 함께 응원하고 기록할 수 있는 신앙기념관을 남겨보세요.
+                  가족과 가까운 사람들이 함께 기록할 수 있는 인생기념관을 남겨보세요.
                 </span>
               </p>
             </div>
@@ -486,7 +486,7 @@ export default function MemorialCreate() {
                     href="#story"
                     className="block transition-colors hover:text-[#121212]"
                   >
-                    신앙 이야기
+                    삶의 이야기
                   </a>
                   <a
                     href="#timeline"
@@ -537,7 +537,7 @@ export default function MemorialCreate() {
                     />
                   </Field>
 
-                  <Field label="직분" error={errors.role} required>
+                  <Field label="호칭" error={errors.role} required>
                     <select
                       className={selectClass}
                       value={form.role}
@@ -547,11 +547,12 @@ export default function MemorialCreate() {
                       aria-invalid={Boolean(errors.role)}
                     >
                       <option value="">선택해 주세요</option>
-                      <option value="장로">장로</option>
-                      <option value="권사">권사</option>
-                      <option value="집사">집사</option>
-                      <option value="목사">목사</option>
-                      <option value="성도">성도</option>
+                      <option value="아버지">아버지</option>
+                      <option value="어머니">어머니</option>
+                      <option value="할아버지">할아버지</option>
+                      <option value="할머니">할머니</option>
+                      <option value="가족">가족</option>
+                      <option value="선생님">선생님</option>
                     </select>
                   </Field>
 
@@ -567,18 +568,18 @@ export default function MemorialCreate() {
                     />
                   </Field>
 
-                  <Field label="소속 교회">
+                  <Field label="가족/지역">
                     <input
                       className={inputClass}
                       value={form.church}
                       onChange={event =>
                         updateField("church", event.target.value)
                       }
-                      placeholder="기쁨이 있는교회"
+                      placeholder="우리 가족 / 서울 / 고향"
                     />
                   </Field>
 
-                  <Field label="신앙기념관 주소">
+                  <Field label="인생기념관 주소">
                     <input
                       className={inputClass}
                       value={form.slug}
@@ -617,29 +618,29 @@ export default function MemorialCreate() {
                 id="story"
                 className="scroll-mt-24 border border-[#dbdad7] p-5 md:p-8"
               >
-                <SectionHeader number="02" title="신앙 이야기" />
+                <SectionHeader number="02" title="삶의 이야기" />
 
                 <div className="space-y-6">
                   <div className="grid gap-6 md:grid-cols-[minmax(0,1fr)_180px]">
-                    <Field label="대표 말씀">
+                    <Field label="대표 문장">
                       <input
                         className={inputClass}
                         value={form.verse}
                         onChange={event =>
                           updateField("verse", event.target.value)
                         }
-                        placeholder="내가 선한 싸움을 싸우고 나의 달려갈 길을 마치고..."
+                        placeholder="늘 괜찮다 말하며 우리를 먼저 챙기던 사람"
                       />
                     </Field>
 
-                    <Field label="말씀 출처">
+                    <Field label="문장 메모">
                       <input
                         className={inputClass}
                         value={form.verseRef}
                         onChange={event =>
                           updateField("verseRef", event.target.value)
                         }
-                        placeholder="딤후 4:7"
+                        placeholder="가족이 기억하는 말"
                       />
                     </Field>
                   </div>
@@ -651,7 +652,7 @@ export default function MemorialCreate() {
                       onChange={event =>
                         updateField("summary", event.target.value)
                       }
-                      placeholder="믿음과 사랑으로 가족과 교회를 섬긴 분"
+                      placeholder="사랑과 성실함으로 가족의 중심이 되어준 분"
                       aria-invalid={Boolean(errors.summary)}
                     />
                   </Field>
@@ -663,7 +664,7 @@ export default function MemorialCreate() {
                       onChange={event =>
                         updateField("story", event.target.value)
                       }
-                      placeholder="삶과 신앙, 가족과 교회가 함께 기억하고 응원할 이야기를 간결하게 적어 주세요."
+                      placeholder="삶의 여정과 가족이 함께 기억하고 싶은 이야기를 간결하게 적어 주세요."
                       aria-invalid={Boolean(errors.story)}
                     />
                   </Field>
@@ -847,13 +848,13 @@ export default function MemorialCreate() {
                     </div>
                     <p className="mt-3 text-xs leading-6 text-[#616161]">
                       기본 정보는 검색 결과에 표시됩니다. 비공개로 설정하면
-                      비밀번호를 아는 분만 신앙기념관에 들어갈 수 있습니다.
+                      비밀번호를 아는 분만 인생기념관에 들어갈 수 있습니다.
                     </p>
                   </Field>
 
                   {form.visibility === "private" && (
                     <Field
-                      label="신앙기념관 입장 비밀번호"
+                      label="인생기념관 입장 비밀번호"
                       error={errors.accessPassword}
                       required
                     >
@@ -877,12 +878,12 @@ export default function MemorialCreate() {
                   <div>
                     <p className="text-sm font-medium text-[#121212]">
                       {submitted
-                        ? "신앙기념관이 생성되었습니다."
+                        ? "인생기념관이 생성되었습니다."
                         : "입력 내용을 확인해 주세요."}
                     </p>
                     <p className="mt-2 text-sm leading-6 text-[#616161]">
                       {notice ||
-                        "작성한 내용은 신앙기념관으로 저장됩니다. 이후 필요한 내용은 이어서 보완할 수 있습니다."}
+                        "작성한 내용은 인생기념관으로 저장됩니다. 이후 필요한 내용은 이어서 보완할 수 있습니다."}
                     </p>
                   </div>
 
@@ -910,7 +911,7 @@ export default function MemorialCreate() {
                     >
                       {createMemorialMutation.isPending
                         ? "저장 중"
-                        : "신앙기념관 생성"}
+                        : "인생기념관 생성"}
                       <ArrowRight className="h-4 w-4" strokeWidth={1.6} />
                     </button>
                   </div>
@@ -929,8 +930,8 @@ export default function MemorialCreate() {
                       </p>
                       <dl className="mt-4 grid gap-3 text-sm text-[#616161] sm:grid-cols-2">
                         <SummaryItem label="성함" value={form.name} />
-                        <SummaryItem label="직분" value={form.role} />
-                        <SummaryItem label="소속" value={form.church} />
+                        <SummaryItem label="호칭" value={form.role} />
+                        <SummaryItem label="가족/지역" value={form.church} />
                         <SummaryItem
                           label="주소"
                           value={

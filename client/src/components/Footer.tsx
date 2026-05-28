@@ -2,10 +2,10 @@ import { Plus } from "lucide-react";
 import { Link } from "wouter";
 
 const serviceLinks = [
-  { label: "신앙기념관", href: "/memorial-garden", type: "route" },
-  { label: "추모관", href: "/memorial/search", type: "route" },
-  { label: "신앙기념관 만들기", href: "/memorial/create", type: "route" },
-  { label: "추모관 편지", href: "/letters", type: "route" },
+  { label: "인생기념관", href: "/memorial-garden", type: "route" },
+  { label: "추모 기록", href: "/memorial/search", type: "route" },
+  { label: "인생기념관 만들기", href: "/memorial/create", type: "route" },
+  { label: "가족의 마음글", href: "/letters", type: "route" },
   { label: "키오스크", href: "/kiosk", type: "route" },
 ];
 
@@ -30,12 +30,13 @@ export default function Footer() {
                   className="block text-[10px] text-[#686257]"
                   style={{ letterSpacing: "0.14em" }}
                 >
-                  기쁨이 있는교회 신앙기념관
+                  기쁨이 있는 곳 인생기념관
                 </span>
               </div>
             </div>
             <p className="max-w-sm text-sm leading-7">
-              성도의 삶과 신앙, 감사와 응원을 교회 공동체가 함께 기록합니다.
+              부모님의 삶과 가족의 기억을 사진, 글, 영상으로 차분히
+              기록합니다.
             </p>
           </div>
 
@@ -73,18 +74,18 @@ export default function Footer() {
               className="mb-4 text-xs font-medium text-[#29251d] uppercase"
               style={{ letterSpacing: "0.16em" }}
             >
-              기쁨이 있는교회
+              기쁨이 있는 곳
             </h2>
             <ul className="space-y-3 text-sm">
-              <li>신앙기념관 전용 서비스</li>
-              <li>기쁨, 감사, 신앙의 이야기</li>
+              <li>인생기념관 전용 서비스</li>
+              <li>기쁨, 감사, 삶의 이야기</li>
             </ul>
           </div>
         </div>
 
         <div className="mt-12 flex flex-col justify-between gap-3 border-t border-[#e8decd] pt-6 text-xs md:flex-row">
-          <p>© 2026 기쁨이 있는교회. All rights reserved.</p>
-          <p>기쁨이 있는 곳 신앙기념관</p>
+          <p>© 2026 기쁨이 있는 곳. All rights reserved.</p>
+          <p>기쁨이 있는 곳 인생기념관</p>
         </div>
       </div>
     </footer>

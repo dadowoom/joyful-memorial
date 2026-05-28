@@ -1,9 +1,9 @@
 import type { Request } from "express";
 import { getMemorialShareBySlug } from "../db";
 
-const SERVICE_TITLE = "기쁨이 있는 곳 신앙기념관";
+const SERVICE_TITLE = "기쁨이 있는 곳 인생기념관";
 const DEFAULT_DESCRIPTION =
-  "기쁨, 감사, 신앙의 이야기와 살아 있는 공동체 기록을 밝고 따뜻하게 남기는 기쁨이 있는교회 온라인 신앙기념관입니다.";
+  "부모님의 인생과 가족의 기억을 사진, 글, 영상으로 밝고 따뜻하게 남기는 온라인 인생기념관입니다.";
 const DEFAULT_IMAGE = "/joyful-memorial-hero.png";
 const MEMORIAL_PATH = /^\/memorial\/([^/?#]+)(?:\/(?:archive|family))?\/?$/;
 const RESERVED_SLUGS = new Set(["create", "search"]);
@@ -117,8 +117,8 @@ async function getMemorialMeta(req: Request): Promise<PageMeta | null> {
 
   const title = `${memorial.name} ${memorial.role} | ${SERVICE_TITLE}`;
   const description = isMemorial
-    ? `${memorial.name} ${memorial.role}님의 추모관입니다.`
-    : `${memorial.name} ${memorial.role}님의 신앙기념관입니다.`;
+    ? `${memorial.name} ${memorial.role}님의 추모 기록입니다.`
+    : `${memorial.name} ${memorial.role}님의 인생기념관입니다.`;
 
   return {
     title,

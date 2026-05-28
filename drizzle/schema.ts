@@ -57,7 +57,7 @@ export const memorials = mysqlTable("memorials", {
   recordType: mysqlEnum("recordType", ["faith", "memorial"])
     .default("faith")
     .notNull(),
-  church: varchar("church", { length: 160 }).default("기쁨이 있는교회").notNull(),
+  church: varchar("church", { length: 160 }).default("우리 가족").notNull(),
   familyContact: varchar("familyContact", { length: 120 }),
   familyPhone: varchar("familyPhone", { length: 80 }),
   verse: text("verse"),

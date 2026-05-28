@@ -36,10 +36,10 @@ export default function MemorialLettersSection({
     onSuccess: async () => {
       setAuthor("");
       setContent("");
-      setMessage(isMemorial ? "편지가 남겨졌습니다." : "응원글이 남겨졌습니다.");
+      setMessage(isMemorial ? "마음글이 남겨졌습니다." : "감사글이 남겨졌습니다.");
       await Promise.all([
         utils.letter.byMemorial.invalidate(queryInput),
-        isMemorial ? utils.letter.recent.invalidate() : Promise.resolve(),
+        utils.letter.recent.invalidate(),
       ]);
     },
   });
@@ -52,8 +52,8 @@ export default function MemorialLettersSection({
     if (!trimmedAuthor || !trimmedContent) {
       setMessage(
         isMemorial
-          ? "이름과 편지 내용을 모두 입력해주세요."
-          : "이름과 응원글 내용을 모두 입력해주세요."
+          ? "이름과 마음글 내용을 모두 입력해주세요."
+          : "이름과 감사글 내용을 모두 입력해주세요."
       );
       return;
     }
@@ -72,11 +72,11 @@ export default function MemorialLettersSection({
       <div className="container">
         <SectionHeader
           eyebrow={isMemorial ? "Letters" : "Messages"}
-          title={isMemorial ? "하늘로 보내는 편지" : "응원글"}
+          title={isMemorial ? "가족의 마음글" : "감사글"}
           description={
             isMemorial
-              ? `${memorialName}님의 추모관에 남긴 편지는 하늘로 보내는 편지에도 함께 모입니다.`
-              : `${memorialName}님의 신앙기념관에 응원과 감사의 마음을 남겨주세요.`
+              ? `${memorialName}님의 추모 기록에 남긴 글은 가족의 마음글에도 함께 모입니다.`
+              : `${memorialName}님의 인생기념관에 감사의 마음을 남겨주세요.`
           }
         />
 
@@ -113,7 +113,7 @@ export default function MemorialLettersSection({
                   onChange={event => setContent(event.target.value)}
                   placeholder={
                     isMemorial
-                      ? "하늘로 전하고 싶은 마음을 남겨주세요."
+                      ? "마음으로 전하고 싶은 이야기를 남겨주세요."
                       : "응원이나 감사의 마음을 남겨주세요."
                   }
                   maxLength={2000}
@@ -128,8 +128,8 @@ export default function MemorialLettersSection({
                   (isPrivate
                     ? "비공개 기념관에만 보관되며 해당 기념관 안에서만 표시됩니다."
                     : isMemorial
-                      ? "남겨진 편지는 하늘로 보내는 편지에 함께 모입니다."
-                      : "응원글은 이 신앙기념관 안에서만 표시됩니다.")}
+                      ? "남겨진 글은 가족의 마음글에 함께 모입니다."
+                      : "감사글은 이 인생기념관 안에서만 표시됩니다.")}
               </p>
               <button
                 type="submit"
@@ -139,8 +139,8 @@ export default function MemorialLettersSection({
                 {createLetterMutation.isPending
                   ? "남기는 중"
                   : isMemorial
-                    ? "편지 남기기"
-                    : "응원글 남기기"}
+                    ? "마음글 남기기"
+                    : "감사글 남기기"}
                 <Send className="h-4 w-4" strokeWidth={1.7} />
               </button>
             </div>
@@ -153,8 +153,8 @@ export default function MemorialLettersSection({
                 style={{ color: mutedText }}
               >
                 {isMemorial
-                  ? "편지를 불러오고 있습니다."
-                  : "응원글을 불러오고 있습니다."}
+                  ? "마음글을 불러오고 있습니다."
+                  : "감사글을 불러오고 있습니다."}
               </p>
             ) : lettersQuery.data?.length ? (
               lettersQuery.data.map(letter => (
@@ -187,8 +187,8 @@ export default function MemorialLettersSection({
                 style={{ color: mutedText }}
               >
                 {isMemorial
-                  ? "아직 남겨진 편지가 없습니다."
-                  : "아직 남겨진 응원글이 없습니다."}
+                  ? "아직 남겨진 마음글이 없습니다."
+                  : "아직 남겨진 감사글이 없습니다."}
               </p>
             )}
           </div>
@@ -200,7 +200,7 @@ export default function MemorialLettersSection({
                 className="inline-flex h-11 items-center justify-center border border-[#e6ded1] bg-white px-5 text-sm font-medium transition-colors hover:bg-[#faf9f7]"
                 style={{ color: "#4f4638" }}
               >
-                모든 편지 보기
+                모든 마음글 보기
               </span>
             </Link>
             </div>

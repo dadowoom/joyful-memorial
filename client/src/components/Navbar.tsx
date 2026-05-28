@@ -5,10 +5,10 @@ import { useState } from "react";
 import { Link } from "wouter";
 
 const navItems = [
-  { label: "신앙기념관", href: "/memorial-garden" },
+  { label: "인생기념관", href: "/memorial-garden" },
   { label: "기념관 만들기", href: "/memorial/create" },
-  { label: "추모관", href: "/memorial/search" },
-  { label: "추모관 편지", href: "/letters" },
+  { label: "추모 기록", href: "/memorial/search" },
+  { label: "가족의 마음글", href: "/letters" },
 ];
 
 export default function Navbar() {
@@ -37,7 +37,7 @@ export default function Navbar() {
                   className="block text-[10px] text-[#686257]"
                   style={{ letterSpacing: "0.14em" }}
                 >
-                  신앙기념관
+                  인생기념관
                 </span>
               </div>
             </div>
@@ -59,7 +59,7 @@ export default function Navbar() {
             <Link href="/memorial-garden">
               <button className="inline-flex h-9 items-center justify-center gap-2 rounded-full border border-[#e8decd] bg-white px-4 text-xs font-medium text-[#29251d] transition-colors hover:bg-[#fffdf8]">
                 <Search className="h-3.5 w-3.5" />
-                신앙기념관
+                인생기념관
               </button>
             </Link>
             <Link href="/memorial/create">

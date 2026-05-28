@@ -30,7 +30,7 @@ const coral = "#d8896f";
 
 const FEATURES = [
   {
-    title: "신앙의 이야기",
+    title: "삶의 이야기",
     desc: "현재의 삶과 섬김, 가족이 기억하는 감사의 고백을 한곳에 정리합니다.",
     icon: BookOpenText,
   },
@@ -40,8 +40,8 @@ const FEATURES = [
     icon: Image,
   },
   {
-    title: "응원글",
-    desc: "살아 있는 신앙기념관에는 편지 대신 응원과 감사의 마음을 남깁니다.",
+    title: "감사글",
+    desc: "가족과 가까운 사람들이 응원과 감사의 마음을 남깁니다.",
     icon: MessageCircle,
   },
 ];
@@ -89,7 +89,7 @@ export default function MemorialGarden() {
                 className="text-[11px] font-semibold uppercase"
                 style={{ letterSpacing: "0.18em", color: green }}
               >
-                Faith Memorial Hall
+                Life Memorial Hall
               </p>
               <h1
                 className="mt-5 text-5xl font-normal leading-[1.08] md:text-7xl"
@@ -97,11 +97,11 @@ export default function MemorialGarden() {
               >
                 기쁨이 있는 곳
                 <br />
-                신앙기념관
+                인생기념관
               </h1>
               <p className="mt-7 max-w-2xl text-base leading-8" style={{ color: muted }}>
-                살아계신 성도의 믿음과 섬김, 가족의 감사와 공동체의 응원을
-                밝고 따뜻한 기록으로 이어가는 공간입니다.
+                부모님의 인생과 가족의 기억을 밝고 따뜻한 기록으로 이어가는
+                공간입니다.
               </p>
               <div className="mt-8 flex flex-col gap-3 sm:flex-row">
                 <a href="#faith-memorials">
@@ -110,7 +110,7 @@ export default function MemorialGarden() {
                     style={{ background: green }}
                   >
                     <Search className="h-4 w-4" />
-                    신앙기념관 찾기
+                    인생기념관 찾기
                   </button>
                 </a>
                 <Link href="/memorial/create">
@@ -119,7 +119,7 @@ export default function MemorialGarden() {
                     style={{ borderColor: line, color: ink }}
                   >
                     <Plus className="h-4 w-4" />
-                    신앙기념관 만들기
+                    인생기념관 만들기
                   </button>
                 </Link>
               </div>
@@ -136,7 +136,7 @@ export default function MemorialGarden() {
               >
                 “기억을 넘어,
                 <br />
-                오늘의 믿음을 함께 응원합니다.”
+                오늘의 삶을 함께 응원합니다.”
               </p>
               <div className="mt-8 grid gap-px overflow-hidden rounded-[8px] bg-[#e7ddc8] sm:grid-cols-3">
                 <InfoTile label="공개" value="검색 가능" />
@@ -165,11 +165,11 @@ export default function MemorialGarden() {
                   className="mt-4 text-3xl font-normal leading-tight md:text-5xl"
                   style={serifStyle}
                 >
-                  등록된 신앙기념관
+                  등록된 인생기념관
                 </h2>
               </div>
               <p className="max-w-md text-sm leading-7" style={{ color: muted }}>
-                인물 카드를 통해 이름, 직분, 사진을 확인하고 각 신앙기념관으로
+                인물 카드를 통해 이름, 호칭, 사진을 확인하고 각 인생기념관으로
                 바로 이동할 수 있습니다.
               </p>
             </div>
@@ -186,7 +186,7 @@ export default function MemorialGarden() {
                     setQuery(event.target.value);
                     setPage(1);
                   }}
-                  placeholder="이름, 직분, 교회로 검색"
+                  placeholder="이름, 호칭, 가족으로 검색"
                   className="h-full min-w-0 flex-1 bg-transparent text-sm outline-none placeholder:text-[#9c968b]"
                 />
               </label>
@@ -198,7 +198,7 @@ export default function MemorialGarden() {
             {memorialsQuery.isLoading ? (
               <StatePanel text="등록된 인물을 불러오고 있습니다." />
             ) : filtered.length === 0 ? (
-              <StatePanel text={memorials.length ? "검색 결과가 없습니다." : "아직 공개된 신앙기념관이 없습니다."} />
+              <StatePanel text={memorials.length ? "검색 결과가 없습니다." : "아직 공개된 인생기념관이 없습니다."} />
             ) : (
               <>
                 <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
@@ -300,12 +300,12 @@ export default function MemorialGarden() {
                   Functions
                 </p>
                 <h2 className="mt-4 text-3xl font-normal md:text-5xl" style={serifStyle}>
-                  기쁨이 있는교회를 위한 기록 방식
+                  가족의 삶을 위한 기록 방식
                 </h2>
               </div>
               <p className="max-w-md text-sm leading-7" style={{ color: muted }}>
-                신앙기념관은 밝게 기록하고, 추모관으로 전환된 인물은 차분한 추모
-                톤과 하늘로 보내는 편지를 사용합니다.
+                인생기념관은 밝게 기록하고, 추모 기록으로 전환된 인물은 차분한 추모
+                톤과 가족의 마음글을 사용합니다.
               </p>
             </div>
 
@@ -335,16 +335,16 @@ export default function MemorialGarden() {
                 Memorial Mode
               </p>
               <h2 className="mt-4 text-3xl font-normal md:text-5xl" style={serifStyle}>
-                추모관 전환
+                추모 기록 전환
               </h2>
               <p className="mt-5 max-w-2xl text-sm leading-7 text-white/70">
-                소천 이후에는 신앙기념관을 추모관으로 전환해 소천일, 추도일,
-                하늘로 보내는 편지를 별도로 사용할 수 있게 준비합니다.
+                별세 이후에는 인생기념관을 추모 기록으로 전환해 별세일, 기일,
+                가족의 마음글을 별도로 사용할 수 있게 준비합니다.
               </p>
             </div>
             <Link href="/memorial/search">
               <button className="inline-flex h-12 items-center justify-center gap-2 rounded-full border border-white/24 px-5 text-sm font-semibold text-white">
-                추모관 검색
+                추모 기록 검색
                 <LockKeyhole className="h-4 w-4" />
               </button>
             </Link>

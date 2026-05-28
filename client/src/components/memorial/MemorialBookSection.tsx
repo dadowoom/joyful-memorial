@@ -78,7 +78,7 @@ const CoverPage = forwardRef<HTMLDivElement, { book: MemorialBook }>(
       >
         <div className="mb-8 h-px w-16 bg-[#7f673d]" />
         <p className="mb-5 text-[11px] uppercase tracking-[0.28em] text-[#7f673d]">
-          The Book Of Faith
+          The Book Of Life
         </p>
         <h3
           className="text-3xl font-light leading-tight text-[#2e2218]"
@@ -245,7 +245,7 @@ export default function MemorialBookSection({
       <div className="container">
         <div className="mx-auto mb-10 max-w-3xl text-center">
           <p className="mb-3 text-xs font-medium uppercase tracking-[0.28em] text-[#7f673d]">
-            The Book Of Faith
+            The Book Of Life
           </p>
           <h2
             className="text-3xl font-light md:text-4xl"

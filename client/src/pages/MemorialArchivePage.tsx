@@ -16,9 +16,9 @@ import {
   ArrowLeft,
   BookOpenText,
   CalendarDays,
-  Church,
   Images,
   LockKeyhole,
+  MapPin,
   Video,
 } from "lucide-react";
 import { useEffect, useState, type ReactNode } from "react";
@@ -147,7 +147,7 @@ export default function MemorialArchivePage() {
                 >
                   <button className="mb-10 inline-flex h-10 items-center gap-2 border border-[#e6ded1] bg-white px-4 text-sm text-[#4f4638] transition-colors hover:bg-[#faf9f7]">
                     <ArrowLeft className="h-4 w-4" strokeWidth={1.6} />
-                    {isMemorialHall ? "추모관으로 돌아가기" : "목록으로 돌아가기"}
+                    {isMemorialHall ? "추모 기록으로 돌아가기" : "목록으로 돌아가기"}
                   </button>
                 </Link>
 
@@ -162,7 +162,7 @@ export default function MemorialArchivePage() {
                         className="text-[11px] font-medium uppercase tracking-[0.28em]"
                         style={{ color: warmGold }}
                       >
-                        {isMemorialHall ? "추모 기념관" : "신앙기념관"}
+                        {isMemorialHall ? "추모 기록" : "인생기념관"}
                       </p>
                     </div>
 
@@ -188,8 +188,8 @@ export default function MemorialArchivePage() {
                     </p>
                     <p className="mt-2 text-sm" style={{ color: mutedText }}>
                       {isMemorialHall
-                        ? `${memorial.church} 추모관`
-                        : `${memorial.church} 신앙기념관`}
+                        ? `${memorial.church} 추모 기록`
+                        : `${memorial.church} 인생기념관`}
                     </p>
 
                     <div
@@ -229,12 +229,12 @@ export default function MemorialArchivePage() {
                       />
                       <ArchiveFact
                         icon={<CalendarDays className="h-4 w-4" />}
-                        label={isMemorialHall ? "소천" : "직분"}
+                        label={isMemorialHall ? "별세" : "호칭"}
                         value={isMemorialHall ? memorial.deathDate : memorial.role}
                       />
                       <ArchiveFact
-                        icon={<Church className="h-4 w-4" />}
-                        label="교회"
+                        icon={<MapPin className="h-4 w-4" />}
+                        label="가족"
                         value={memorial.church}
                       />
                     </div>
@@ -332,12 +332,12 @@ export default function MemorialArchivePage() {
             <section className="py-20 md:py-28">
               <div className="container">
                 <SectionHeader
-                  eyebrow={isMemorialHall ? "Faith Story" : "Faith Journey"}
-                  title={isMemorialHall ? "신앙의 이야기" : "이어가는 신앙 여정"}
+                  eyebrow={isMemorialHall ? "Life Story" : "Life Journey"}
+                  title={isMemorialHall ? "삶의 이야기" : "이어가는 삶의 여정"}
                   description={
                     isMemorialHall
-                      ? "가족과 교회가 기억하는 믿음의 발자취를 담았습니다."
-                      : "가족과 교회가 오늘의 감사와 섬김을 함께 기록합니다."
+                      ? "가족과 가까운 사람들이 기억하는 삶의 발자취를 담았습니다."
+                      : "가족과 가까운 사람들이 오늘의 감사와 이야기를 함께 기록합니다."
                   }
                 />
 
@@ -382,7 +382,7 @@ export default function MemorialArchivePage() {
                       className="text-2xl font-light"
                       style={{ ...serifStyle, color: warmText }}
                     >
-                      {isMemorialHall ? "기억으로 남은 삶" : "지금 이어가는 신앙"}
+                      {isMemorialHall ? "기억으로 남은 삶" : "지금 이어가는 삶"}
                     </h2>
                     <div
                       className="mt-6 whitespace-pre-wrap break-words font-light leading-8"
@@ -556,7 +556,11 @@ function getFallbackPortrait(memorial?: ArchiveMemorial) {
   if (memorial.slug === "kim-yohan-elder") {
     return "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=800&h=1000&fit=crop&auto=format&q=80";
   }
-  if (memorial.role.includes("권사") || memorial.name.includes("순자")) {
+  if (
+    memorial.role.includes("어머니") ||
+    memorial.role.includes("할머니") ||
+    memorial.name.includes("순자")
+  ) {
     return "https://d2xsxph8kpxj0f.cloudfront.net/310519663470178900/Mgh5Mk5AAaqsycpXA9tc7E/memorial_elder_woman-VLyrQ8BXGGoAo339g3C8yL.webp";
   }
   return "https://d2xsxph8kpxj0f.cloudfront.net/310519663470178900/Mgh5Mk5AAaqsycpXA9tc7E/memorial_elder_man-EoYUBTXnk59Sfrj2gmtSED.webp";
