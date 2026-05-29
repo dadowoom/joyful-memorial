@@ -1,6 +1,7 @@
 import { z } from "zod";
 import { TRPCError } from "@trpc/server";
 import {
+  canReadMemorial,
   createMemorialBook,
   createMemorialBookPage,
   deleteMemorialBook,
@@ -17,6 +18,14 @@ import { protectedProcedure, publicProcedure, router } from "../_core/trpc";
 import type { User } from "../../drizzle/schema";
 
 const nullableText = z.string().trim().nullable().optional();
+const bookListInput = z.object({
+  memorialId: z.number(),
+  accessToken: z.string().trim().max(128).optional(),
+});
+const bookGetInput = z.object({
+  id: z.number(),
+  accessToken: z.string().trim().max(128).optional(),
+});
 
 async function assertCanManageMemorial(memorialId: number, user: User) {
   const memorial = await getAdminMemorialById(memorialId);
@@ -61,10 +70,42 @@ async function assertCanManagePage(pageId: number, user: User) {
   return page;
 }
 
+async function assertCanReadMemorialBooks(
+  memorialId: number,
+  user?: User | null,
+  accessToken?: string
+) {
+  const memorial = await getAdminMemorialById(memorialId);
+  if (!memorial) {
+    throw new TRPCError({
+      code: "NOT_FOUND",
+      message: "기념관을 찾을 수 없습니다.",
+    });
+  }
+
+  if (
+    user?.role === "admin" ||
+    memorial.ownerUserId === user?.id ||
+    canReadMemorial(memorial, accessToken)
+  ) {
+    return;
+  }
+
+  throw new TRPCError({
+    code: "FORBIDDEN",
+    message: "비공개 기념관입니다.",
+  });
+}
+
 export const bookRouter = router({
   listByMemorial: publicProcedure
-    .input(z.object({ memorialId: z.number() }))
-    .query(async ({ input }) => {
+    .input(bookListInput)
+    .query(async ({ ctx, input }) => {
+      await assertCanReadMemorialBooks(
+        input.memorialId,
+        ctx.user,
+        input.accessToken
+      );
       const books = await listMemorialBooks(input.memorialId);
       return Promise.all(
         books.map(async book => ({
@@ -75,8 +116,8 @@ export const bookRouter = router({
     }),
 
   getById: publicProcedure
-    .input(z.object({ id: z.number() }))
-    .query(async ({ input }) => {
+    .input(bookGetInput)
+    .query(async ({ ctx, input }) => {
       const book = await getMemorialBookById(input.id);
       if (!book) {
         throw new TRPCError({
@@ -84,6 +125,11 @@ export const bookRouter = router({
           message: "책을 찾을 수 없습니다.",
         });
       }
+      await assertCanReadMemorialBooks(
+        book.memorialId,
+        ctx.user,
+        input.accessToken
+      );
       return { ...book, pages: await listMemorialBookPages(book.id) };
     }),
 

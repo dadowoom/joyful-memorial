@@ -44,6 +44,7 @@ type MemorialBook = {
 type MemorialBookSectionProps = {
   memorialId: number;
   isAdmin: boolean;
+  accessToken?: string;
 };
 
 type ViewMode = "book" | "timeline";
@@ -165,10 +166,12 @@ const BlankPage = forwardRef<HTMLDivElement>(function BlankPage(_, ref) {
 export default function MemorialBookSection({
   memorialId,
   isAdmin,
+  accessToken,
 }: MemorialBookSectionProps) {
   const utils = trpc.useUtils();
   const bookRef = useRef<any>(null);
-  const booksQuery = trpc.book.listByMemorial.useQuery({ memorialId });
+  const booksQueryInput = { memorialId, accessToken };
+  const booksQuery = trpc.book.listByMemorial.useQuery(booksQueryInput);
   const [selectedBookIndex, setSelectedBookIndex] = useState(0);
   const [currentPage, setCurrentPage] = useState(0);
   const [viewMode, setViewMode] = useState<ViewMode>("book");
@@ -191,7 +194,7 @@ export default function MemorialBookSection({
       toast.success("책이 추가되었습니다.");
       setAddingBook(false);
       setNewBookTitle("");
-      utils.book.listByMemorial.invalidate({ memorialId });
+      utils.book.listByMemorial.invalidate(booksQueryInput);
     },
     onError: error => toast.error(error.message),
   });
@@ -199,7 +202,7 @@ export default function MemorialBookSection({
     onSuccess: () => {
       toast.success("책이 삭제되었습니다.");
       setSelectedBookIndex(0);
-      utils.book.listByMemorial.invalidate({ memorialId });
+      utils.book.listByMemorial.invalidate(booksQueryInput);
     },
     onError: error => toast.error(error.message),
   });
@@ -207,7 +210,7 @@ export default function MemorialBookSection({
     onSuccess: () => {
       toast.success("페이지가 추가되었습니다.");
       setEditingPage(null);
-      utils.book.listByMemorial.invalidate({ memorialId });
+      utils.book.listByMemorial.invalidate(booksQueryInput);
     },
     onError: error => toast.error(error.message),
   });
@@ -215,14 +218,14 @@ export default function MemorialBookSection({
     onSuccess: () => {
       toast.success("저장되었습니다.");
       setEditingPage(null);
-      utils.book.listByMemorial.invalidate({ memorialId });
+      utils.book.listByMemorial.invalidate(booksQueryInput);
     },
     onError: error => toast.error(error.message),
   });
   const deletePage = trpc.book.deletePage.useMutation({
     onSuccess: () => {
       toast.success("페이지가 삭제되었습니다.");
-      utils.book.listByMemorial.invalidate({ memorialId });
+      utils.book.listByMemorial.invalidate(booksQueryInput);
     },
     onError: error => toast.error(error.message),
   });

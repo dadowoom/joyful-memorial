@@ -19,6 +19,7 @@ import {
   users,
 } from "../drizzle/schema";
 import { ENV } from "./_core/env";
+import { storageDelete } from "./storage";
 
 let _db: ReturnType<typeof drizzle> | null = null;
 
@@ -204,7 +205,7 @@ export async function createLocalUser(input: {
     return null;
   }
 
-  const firstAdmin = !(await hasAdminUser());
+  const firstAdmin = !ENV.isProduction && !(await hasAdminUser());
   const now = new Date();
 
   await db.insert(users).values({
@@ -570,11 +571,24 @@ export async function deleteMemorial(id: number) {
   }
 
   const books = await db
-    .select({ id: memorialBooks.id })
+    .select({ id: memorialBooks.id, coverPhotoKey: memorialBooks.coverPhotoKey })
     .from(memorialBooks)
     .where(eq(memorialBooks.memorialId, id));
+  const galleryPhotos = await db
+    .select({ photoKey: memorialGalleryPhotos.photoKey })
+    .from(memorialGalleryPhotos)
+    .where(eq(memorialGalleryPhotos.memorialId, id));
+  const storageKeys = [
+    ...galleryPhotos.map(photo => photo.photoKey),
+    ...books.map(book => book.coverPhotoKey).filter(Boolean),
+  ];
 
   for (const book of books) {
+    const pages = await db
+      .select({ photoKey: memorialBookPages.photoKey })
+      .from(memorialBookPages)
+      .where(eq(memorialBookPages.bookId, book.id));
+    storageKeys.push(...pages.map(page => page.photoKey).filter(Boolean));
     await db
       .delete(memorialBookPages)
       .where(eq(memorialBookPages.bookId, book.id));
@@ -593,6 +607,8 @@ export async function deleteMemorial(id: number) {
     .delete(memorialFamilyRooms)
     .where(eq(memorialFamilyRooms.memorialId, id));
   await db.delete(memorials).where(eq(memorials.id, id));
+
+  await Promise.all(storageKeys.map(key => storageDelete(key)));
 }
 
 export function hashFamilyRoomPassword(password: string) {
@@ -1152,7 +1168,9 @@ export async function deleteMemorialGalleryPhoto(id: number) {
     throw new Error("Database is not available");
   }
 
+  const photo = await getMemorialGalleryPhotoById(id);
   await db.delete(memorialGalleryPhotos).where(eq(memorialGalleryPhotos.id, id));
+  await storageDelete(photo?.photoKey);
 }
 
 export async function listMemorialVideos(memorialId: number) {
@@ -1282,8 +1300,17 @@ export async function deleteMemorialBook(id: number) {
     throw new Error("Database is not available");
   }
 
+  const book = await getMemorialBookById(id);
+  const pages = await db
+    .select({ photoKey: memorialBookPages.photoKey })
+    .from(memorialBookPages)
+    .where(eq(memorialBookPages.bookId, id));
   await db.delete(memorialBookPages).where(eq(memorialBookPages.bookId, id));
   await db.delete(memorialBooks).where(eq(memorialBooks.id, id));
+  await Promise.all([
+    storageDelete(book?.coverPhotoKey),
+    ...pages.map(page => storageDelete(page.photoKey)),
+  ]);
 }
 
 export async function listMemorialBookPages(bookId: number) {
@@ -1333,5 +1360,7 @@ export async function deleteMemorialBookPage(id: number) {
     throw new Error("Database is not available");
   }
 
+  const page = await getMemorialBookPageById(id);
   await db.delete(memorialBookPages).where(eq(memorialBookPages.id, id));
+  await storageDelete(page?.photoKey);
 }

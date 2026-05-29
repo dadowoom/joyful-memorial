@@ -33,6 +33,7 @@ type MemorialVideoSectionProps = {
   churchName: string;
   coverImageUrl?: string;
   isAdmin: boolean;
+  accessToken?: string;
 };
 
 export function extractYoutubeId(input: string) {
@@ -61,9 +62,11 @@ export default function MemorialVideoSection({
   churchName,
   coverImageUrl,
   isAdmin,
+  accessToken,
 }: MemorialVideoSectionProps) {
   const utils = trpc.useUtils();
-  const videosQuery = trpc.video.listByMemorial.useQuery({ memorialId });
+  const videosQueryInput = { memorialId, accessToken };
+  const videosQuery = trpc.video.listByMemorial.useQuery(videosQueryInput);
   const videos = (videosQuery.data ?? []) as MemorialVideo[];
   const visibleVideos = useMemo(
     () => videos.filter(video => video.isVisible !== 0),
@@ -89,18 +92,18 @@ export default function MemorialVideoSection({
       setShowAddForm(false);
       setNewTitle("");
       setNewUrl("");
-      utils.video.listByMemorial.invalidate({ memorialId });
+      utils.video.listByMemorial.invalidate(videosQueryInput);
     },
     onError: error => toast.error(error.message),
   });
   const updateVideo = trpc.video.update.useMutation({
-    onSuccess: () => utils.video.listByMemorial.invalidate({ memorialId }),
+    onSuccess: () => utils.video.listByMemorial.invalidate(videosQueryInput),
     onError: error => toast.error(error.message),
   });
   const deleteVideo = trpc.video.delete.useMutation({
     onSuccess: () => {
       toast.success("영상이 삭제되었습니다.");
-      utils.video.listByMemorial.invalidate({ memorialId });
+      utils.video.listByMemorial.invalidate(videosQueryInput);
       setSelectedVideoId(null);
     },
     onError: error => toast.error(error.message),

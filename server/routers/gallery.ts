@@ -2,6 +2,7 @@ import { z } from "zod";
 import { nanoid } from "nanoid";
 import { TRPCError } from "@trpc/server";
 import {
+  canReadMemorial,
   createMemorialGalleryPhoto,
   deleteMemorialGalleryPhoto,
   getAdminMemorialById,
@@ -14,6 +15,11 @@ import { decodeImageDataUrl } from "../_core/imageUpload";
 import { protectedProcedure, publicProcedure, router } from "../_core/trpc";
 import { storagePut } from "../storage";
 import type { User } from "../../drizzle/schema";
+
+const galleryListInput = z.object({
+  memorialId: z.number(),
+  accessToken: z.string().trim().max(128).optional(),
+});
 
 async function assertCanManageMemorial(memorialId: number, user: User) {
   const memorial = await getAdminMemorialById(memorialId);
@@ -32,6 +38,33 @@ async function assertCanManageMemorial(memorialId: number, user: User) {
   }
 }
 
+async function assertCanReadMemorialPhotos(
+  memorialId: number,
+  user?: User | null,
+  accessToken?: string
+) {
+  const memorial = await getAdminMemorialById(memorialId);
+  if (!memorial) {
+    throw new TRPCError({
+      code: "NOT_FOUND",
+      message: "기념관을 찾을 수 없습니다.",
+    });
+  }
+
+  if (
+    user?.role === "admin" ||
+    memorial.ownerUserId === user?.id ||
+    canReadMemorial(memorial, accessToken)
+  ) {
+    return;
+  }
+
+  throw new TRPCError({
+    code: "FORBIDDEN",
+    message: "비공개 기념관입니다.",
+  });
+}
+
 async function assertCanManagePhoto(photoId: number, user: User) {
   const photo = await getMemorialGalleryPhotoById(photoId);
   if (!photo) {
@@ -47,8 +80,15 @@ async function assertCanManagePhoto(photoId: number, user: User) {
 
 export const galleryRouter = router({
   listByMemorial: publicProcedure
-    .input(z.object({ memorialId: z.number() }))
-    .query(({ input }) => listMemorialGalleryPhotos(input.memorialId)),
+    .input(galleryListInput)
+    .query(async ({ ctx, input }) => {
+      await assertCanReadMemorialPhotos(
+        input.memorialId,
+        ctx.user,
+        input.accessToken
+      );
+      return listMemorialGalleryPhotos(input.memorialId);
+    }),
 
   upload: protectedProcedure
     .input(

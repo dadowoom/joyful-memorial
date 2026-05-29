@@ -55,6 +55,8 @@ export default function Login() {
   const loginMutation = trpc.auth.login.useMutation();
   const signupMutation = trpc.auth.signup.useMutation();
   const redirectPath = useMemo(getRedirectPath, []);
+  const signupRedirectPath =
+    redirectPath === "/" ? "/memorial/create" : redirectPath;
   const isCreateRedirect = redirectPath === "/memorial/create";
 
   useEffect(() => {
@@ -116,7 +118,7 @@ export default function Login() {
           ? "최초 관리자 계정으로 가입되었습니다."
           : "가입이 완료되었습니다."
       );
-      setLocation(redirectPath);
+      setLocation(signupRedirectPath);
     } catch (error) {
       setMessage(
         error instanceof Error

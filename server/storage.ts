@@ -54,6 +54,26 @@ export async function storagePut(
   return { key, url: `${UPLOAD_URL_PREFIX}/${key}` };
 }
 
+export async function storageDelete(relKey: string | null | undefined) {
+  if (!relKey) return;
+
+  const key = normalizeKey(relKey);
+  const uploadRoot = path.resolve(UPLOAD_DIR);
+  const filePath = path.resolve(uploadRoot, key);
+
+  if (filePath !== uploadRoot && !filePath.startsWith(uploadRoot + path.sep)) {
+    throw new Error("Invalid storage key");
+  }
+
+  try {
+    await fs.promises.unlink(filePath);
+  } catch (error) {
+    if ((error as NodeJS.ErrnoException).code !== "ENOENT") {
+      throw error;
+    }
+  }
+}
+
 export async function storageGet(relKey: string) {
   const key = normalizeKey(relKey);
   return { key, url: `${UPLOAD_URL_PREFIX}/${key}` };

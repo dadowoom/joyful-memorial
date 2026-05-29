@@ -1,6 +1,7 @@
 import { z } from "zod";
 import { TRPCError } from "@trpc/server";
 import {
+  canReadMemorial,
   createMemorialVideo,
   deleteMemorialVideo,
   getAdminMemorialById,
@@ -10,6 +11,11 @@ import {
 } from "../db";
 import { protectedProcedure, publicProcedure, router } from "../_core/trpc";
 import type { User } from "../../drizzle/schema";
+
+const videoListInput = z.object({
+  memorialId: z.number(),
+  accessToken: z.string().trim().max(128).optional(),
+});
 
 async function canManageMemorial(memorialId: number, user?: User | null) {
   if (!user) return false;
@@ -40,12 +46,41 @@ async function assertCanManageVideo(videoId: number, user: User) {
   return video;
 }
 
+async function getMemorialReadAccess(
+  memorialId: number,
+  user?: User | null,
+  accessToken?: string
+) {
+  const memorial = await getAdminMemorialById(memorialId);
+  if (!memorial) {
+    throw new TRPCError({
+      code: "NOT_FOUND",
+      message: "기념관을 찾을 수 없습니다.",
+    });
+  }
+
+  const canManage = user?.role === "admin" || memorial.ownerUserId === user?.id;
+  if (canManage || canReadMemorial(memorial, accessToken)) {
+    return { canManage };
+  }
+
+  throw new TRPCError({
+    code: "FORBIDDEN",
+    message: "비공개 기념관입니다.",
+  });
+}
+
 export const videoRouter = router({
   listByMemorial: publicProcedure
-    .input(z.object({ memorialId: z.number() }))
+    .input(videoListInput)
     .query(async ({ ctx, input }) => {
+      const access = await getMemorialReadAccess(
+        input.memorialId,
+        ctx.user,
+        input.accessToken
+      );
       const videos = await listMemorialVideos(input.memorialId);
-      if (await canManageMemorial(input.memorialId, ctx.user)) return videos;
+      if (access.canManage) return videos;
       return videos.filter(video => video.isVisible !== 0);
     }),
 

@@ -16,7 +16,7 @@ import {
   Upload,
 } from "lucide-react";
 import { ChangeEvent, FormEvent, useEffect, useMemo, useState } from "react";
-import { Link } from "wouter";
+import { Link, useLocation } from "wouter";
 
 type TimelineItem = {
   id: string;
@@ -136,6 +136,7 @@ const makeTimelineItem = (): TimelineItem => ({
 });
 
 export default function MemorialCreate() {
+  const [, setLocation] = useLocation();
   const { user, loading } = useAuth({
     redirectOnUnauthenticated: true,
   });
@@ -351,6 +352,7 @@ export default function MemorialCreate() {
       setCreatedMemorial(created);
       setNotice("인생기념관이 생성되었습니다. 바로 확인할 수 있습니다.");
       setSubmitted(true);
+      setLocation(created.href || `/memorial/${created.slug}/archive`);
     } catch (error) {
       console.error("[Memorial Create] Failed to save", error);
       setNotice("저장 중 문제가 생겼습니다. 잠시 뒤 다시 시도해 주세요.");

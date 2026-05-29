@@ -88,7 +88,7 @@ export default function MemorialArchivePage() {
     memorial?.recordType === "memorial" ||
     Boolean(memorial?.deathDate?.trim());
   const photosQuery = trpc.gallery.listByMemorial.useQuery(
-    { memorialId: memorial?.id ?? 0 },
+    { memorialId: memorial?.id ?? 0, accessToken: accessToken || undefined },
     { enabled: Boolean(memorial?.id) }
   );
   const photos = (photosQuery.data ?? []) as ArchivePhoto[];
@@ -426,6 +426,7 @@ export default function MemorialArchivePage() {
               <MemorialGallerySection
                 memorialId={memorial.id}
                 isAdmin={canManage}
+                accessToken={accessToken || undefined}
               />
             </div>
             <div id="video">
@@ -435,10 +436,15 @@ export default function MemorialArchivePage() {
                 churchName={memorial.church}
                 coverImageUrl={heroPhoto}
                 isAdmin={canManage}
+                accessToken={accessToken || undefined}
               />
             </div>
             <div id="book">
-              <MemorialBookSection memorialId={memorial.id} isAdmin={canManage} />
+              <MemorialBookSection
+                memorialId={memorial.id}
+                isAdmin={canManage}
+                accessToken={accessToken || undefined}
+              />
             </div>
             <MemorialLettersSection
               memorialSlug={memorial.slug}

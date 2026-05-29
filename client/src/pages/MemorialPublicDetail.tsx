@@ -96,7 +96,7 @@ export default function MemorialPublicDetail() {
   const memorial = memorialQuery.data as MemorialRecord | undefined;
   const isLocked = memorialQuery.error?.data?.code === "FORBIDDEN";
   const photosQuery = trpc.gallery.listByMemorial.useQuery(
-    { memorialId: memorial?.id ?? 0 },
+    { memorialId: memorial?.id ?? 0, accessToken: accessToken || undefined },
     { enabled: Boolean(memorial?.id) }
   );
   const photos = (photosQuery.data ?? []) as MemorialPhoto[];

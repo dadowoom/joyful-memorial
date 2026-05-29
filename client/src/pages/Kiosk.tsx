@@ -9,6 +9,7 @@ type KioskMemorial = {
   role: string;
   birthDate: string;
   deathDate: string;
+  recordType?: "faith" | "memorial";
   church: string;
   isPrivate: boolean;
   href: string;
@@ -18,7 +19,7 @@ type PrivateSelection = {
   slug: string;
   name: string;
   role: string;
-  years: string;
+  yearLabel: string;
 };
 
 const serifStyle = { fontFamily: "'Noto Serif KR', serif" } as const;
@@ -91,7 +92,7 @@ export default function Kiosk() {
         slug: memorial.slug,
         name: memorial.name,
         role: memorial.role,
-        years: `${memorial.birthDate} - ${memorial.deathDate}`,
+        yearLabel: formatKioskYears(memorial),
       });
       setPassword("");
       setPasswordMessage("");
@@ -239,8 +240,8 @@ export default function Kiosk() {
                         )}
                       </span>
                       <span className="mt-2 block text-[15px] leading-6 text-[#616161]">
-                        {memorial.birthDate} - {memorial.deathDate} ·{" "}
-                        {memorial.church} · {memorial.role}
+                        {formatKioskYears(memorial)} · {memorial.church} ·{" "}
+                        {memorial.role}
                       </span>
                     </span>
 
@@ -313,7 +314,7 @@ function PrivateAccessPanel({
               {memorial.name}
             </h2>
             <p className="mt-3 text-base text-[#616161]">
-              {memorial.years} · {memorial.role}
+              {memorial.yearLabel} · {memorial.role}
             </p>
           </div>
 
@@ -348,4 +349,20 @@ function PrivateAccessPanel({
       </section>
     </div>
   );
+}
+
+function isMemorialRecord(record: {
+  recordType?: "faith" | "memorial";
+  deathDate?: string | null;
+}) {
+  return record.recordType === "memorial" || Boolean(record.deathDate?.trim());
+}
+
+function formatKioskYears(record: {
+  birthDate: string;
+  deathDate?: string | null;
+  recordType?: "faith" | "memorial";
+}) {
+  if (!isMemorialRecord(record)) return record.birthDate;
+  return [record.birthDate, record.deathDate].filter(Boolean).join(" - ");
 }

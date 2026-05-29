@@ -28,6 +28,7 @@ type KioskMemorialRecord = {
   role: string;
   birthDate: string;
   deathDate: string;
+  recordType?: "faith" | "memorial";
   church: string;
   verse: string | null;
   verseRef: string | null;
@@ -84,6 +85,7 @@ type AccessStatus = {
   role: string;
   birthDate: string;
   deathDate: string;
+  recordType?: "faith" | "memorial";
   church: string;
   summary: string;
   isPrivate: boolean;
@@ -108,6 +110,8 @@ type FamilyRoomStatus = {
 const serifStyle = { fontFamily: "'Noto Serif KR', serif" } as const;
 const idleResetMs = 90_000;
 const accessStorageKey = (slug: string) => `joyful.memorialAccess.${slug}`;
+const faithPhotoClass = "saturate-[1.05] contrast-[1.01] brightness-[1.02]";
+const memorialPhotoClass = "saturate-[0.72] contrast-[0.98]";
 
 function readAccessToken(slug: string) {
   if (!slug || typeof window === "undefined") return "";
@@ -159,15 +163,15 @@ export default function KioskMemorial() {
   const isLocked = memorialQuery.error?.data?.code === "FORBIDDEN";
 
   const photosQuery = trpc.gallery.listByMemorial.useQuery(
-    { memorialId: memorial?.id ?? 0 },
+    { memorialId: memorial?.id ?? 0, accessToken: accessToken || undefined },
     { enabled: Boolean(memorial?.id) }
   );
   const videosQuery = trpc.video.listByMemorial.useQuery(
-    { memorialId: memorial?.id ?? 0 },
+    { memorialId: memorial?.id ?? 0, accessToken: accessToken || undefined },
     { enabled: Boolean(memorial?.id) }
   );
   const booksQuery = trpc.book.listByMemorial.useQuery(
-    { memorialId: memorial?.id ?? 0 },
+    { memorialId: memorial?.id ?? 0, accessToken: accessToken || undefined },
     { enabled: Boolean(memorial?.id) }
   );
 
@@ -278,6 +282,11 @@ function KioskMemorialContent({
     () => splitParagraphs(memorial.story),
     [memorial.story]
   );
+  const isMemorialHall = isMemorialRecord(memorial);
+  const photoToneClass = isMemorialHall ? memorialPhotoClass : faithPhotoClass;
+  const videoToneClass = isMemorialHall
+    ? `${memorialPhotoClass} opacity-72`
+    : `${faithPhotoClass} opacity-85`;
 
   const navItems = [
     { id: "story", label: "삶" },
@@ -285,7 +294,7 @@ function KioskMemorialContent({
     { id: "video", label: "영상" },
     { id: "book", label: "기록" },
     { id: "family", label: "가족관" },
-    { id: "letters", label: "마음글" },
+    { id: "letters", label: isMemorialHall ? "마음글" : "감사글" },
   ];
 
   return (
@@ -293,7 +302,7 @@ function KioskMemorialContent({
       <section className="px-8 pb-10 pt-8">
         <div>
           <p className="mb-4 text-[12px] font-medium tracking-[0.26em] text-[#777]">
-            JOYFUL MEMORIAL
+            {isMemorialHall ? "JOYFUL MEMORIAL" : "LIFE MEMORIAL"}
           </p>
           <h1
             className="text-[54px] font-normal leading-[1.08]"
@@ -305,7 +314,7 @@ function KioskMemorialContent({
             {memorial.role}
           </p>
           <p className="mt-3 text-base leading-7 text-[#64615d]">
-            {memorial.birthDate} - {memorial.deathDate} · {memorial.church}
+            {formatKioskYears(memorial)} · {memorial.church}
           </p>
           <p className="mt-7 text-[19px] leading-9 text-[#34312d]">
             {memorial.summary}
@@ -317,7 +326,7 @@ function KioskMemorialContent({
             <img
               src={toImgUrl(portraitPhoto.photoUrl)}
               alt={`${memorial.name} 사진`}
-              className="h-[360px] w-full object-cover object-center saturate-[0.72] contrast-[0.98]"
+              className={`h-[360px] w-full object-cover object-center ${photoToneClass}`}
             />
           ) : (
             <div
@@ -331,7 +340,10 @@ function KioskMemorialContent({
 
         <div className="mt-8 grid grid-cols-3 border border-[#dedbd5]">
           <Fact label="출생" value={memorial.birthDate} />
-          <Fact label="별세" value={memorial.deathDate} />
+          <Fact
+            label={isMemorialHall ? "별세" : "호칭"}
+            value={isMemorialHall ? memorial.deathDate : memorial.role}
+          />
           <Fact label="가족" value={memorial.church} />
         </div>
 
@@ -363,7 +375,7 @@ function KioskMemorialContent({
 
         <article className="mt-4 border border-[#dedbd5] p-6">
           <p className="mb-4 text-sm font-medium tracking-[0.22em] text-[#777]">
-            기억으로 남은 삶
+            {isMemorialHall ? "기억으로 남은 삶" : "지금 이어가는 삶"}
           </p>
           <div className="space-y-5">
             {storyParagraphs.map((paragraph, index) => (
@@ -377,15 +389,17 @@ function KioskMemorialContent({
           </div>
         </article>
 
-        <article className="mt-4 border border-[#dedbd5] p-6">
-          <div className="flex items-center gap-3">
-            <CalendarDays className="h-5 w-5" />
-            <p className="text-lg font-medium">기일</p>
-          </div>
-          <p className="mt-4 text-base text-[#64615d]">
-            {formatMemorialDay(memorial.memorialDay)}
-          </p>
-        </article>
+        {isMemorialHall && (
+          <article className="mt-4 border border-[#dedbd5] p-6">
+            <div className="flex items-center gap-3">
+              <CalendarDays className="h-5 w-5" />
+              <p className="text-lg font-medium">기일</p>
+            </div>
+            <p className="mt-4 text-base text-[#64615d]">
+              {formatMemorialDay(memorial.memorialDay)}
+            </p>
+          </article>
+        )}
       </KioskSection>
 
       <KioskSection id="gallery" eyebrow="Gallery" title="사진첩">
@@ -401,7 +415,7 @@ function KioskMemorialContent({
                 <img
                   src={toImgUrl(photo.photoUrl)}
                   alt={photo.caption || "추억 사진"}
-                  className="aspect-square w-full object-cover saturate-[0.72] contrast-[0.98]"
+                  className={`aspect-square w-full object-cover ${photoToneClass}`}
                 />
                 {(photo.caption || photo.year) && (
                   <span className="block px-3 py-3 text-sm leading-6 text-[#64615d]">
@@ -427,7 +441,7 @@ function KioskMemorialContent({
               <img
                 src={toImgUrl(portraitPhoto.photoUrl)}
                 alt={`${memorial.name} 영상 이미지`}
-                className="h-full w-full object-cover saturate-[0.72] contrast-[0.98] opacity-72"
+                className={`h-full w-full object-cover ${videoToneClass}`}
               />
             ) : null}
             <div className="absolute inset-0 bg-black/25" />
@@ -440,7 +454,9 @@ function KioskMemorialContent({
           <div className="p-6">
             <div className="mb-4 flex items-center gap-3">
               <Video className="h-5 w-5" />
-              <p className="text-lg font-medium">영상으로 남은 기억</p>
+              <p className="text-lg font-medium">
+                {isMemorialHall ? "영상으로 남은 기억" : "영상으로 남긴 이야기"}
+              </p>
             </div>
             {videos.length ? (
               <div className="space-y-3">
@@ -455,7 +471,7 @@ function KioskMemorialContent({
               </div>
             ) : (
               <p className="text-base leading-8 text-[#64615d]">
-                영상 기록이 있는 공간이라는 느낌만 조용히 보여줍니다.
+                아직 등록된 영상이 없습니다.
               </p>
             )}
           </div>
@@ -522,6 +538,7 @@ function KioskMemorialContent({
         memorialName={memorial.name}
         accessToken={accessToken}
         isPrivate={memorial.visibility === "private"}
+        isMemorialHall={isMemorialHall}
       />
 
       <div aria-hidden="true" className="h-[52vh] border-t border-[#dedbd5]" />
@@ -543,6 +560,7 @@ function KioskMemorialGate({
   const [password, setPassword] = useState("");
   const [message, setMessage] = useState("");
   const verifyAccess = trpc.memorial.verifyAccess.useMutation();
+  const isMemorialHall = isMemorialRecord(status);
 
   const submit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
@@ -573,15 +591,14 @@ function KioskMemorialGate({
       <form onSubmit={submit} className="border border-[#dedbd5] p-7">
         <LockKeyhole className="mb-6 h-7 w-7" />
         <p className="mb-3 text-sm font-medium tracking-[0.24em] text-[#777]">
-          PRIVATE MEMORIAL
+          {isMemorialHall ? "PRIVATE MEMORIAL" : "PRIVATE LIFE MEMORIAL"}
         </p>
         <h1 className="text-[44px] leading-tight" style={serifStyle}>
           {status?.name || "비공개 기념관"}
         </h1>
         {status && (
           <p className="mt-4 text-base leading-7 text-[#64615d]">
-            {status.birthDate} - {status.deathDate} · {status.church} ·{" "}
-            {status.role}
+            {formatKioskYears(status)} · {status.church} · {status.role}
           </p>
         )}
         <input
@@ -703,11 +720,13 @@ function KioskLettersSection({
   memorialName,
   accessToken,
   isPrivate,
+  isMemorialHall,
 }: {
   memorialSlug: string;
   memorialName: string;
   accessToken?: string;
   isPrivate: boolean;
+  isMemorialHall: boolean;
 }) {
   const utils = trpc.useUtils();
   const [author, setAuthor] = useState("");
@@ -719,7 +738,9 @@ function KioskLettersSection({
     onSuccess: async () => {
       setAuthor("");
       setContent("");
-      setMessage("마음글이 남겨졌습니다.");
+      setMessage(
+        isMemorialHall ? "마음글이 남겨졌습니다." : "감사글이 남겨졌습니다."
+      );
       await Promise.all([
         utils.letter.byMemorial.invalidate(queryInput),
         utils.letter.recent.invalidate(),
@@ -746,7 +767,11 @@ function KioskLettersSection({
   const letters = (lettersQuery.data ?? []) as MemorialLetter[];
 
   return (
-    <KioskSection id="letters" eyebrow="Letters" title="가족의 마음글">
+    <KioskSection
+      id="letters"
+      eyebrow="Letters"
+      title={isMemorialHall ? "가족의 마음글" : "감사글"}
+    >
       <form onSubmit={submit} className="border border-[#dedbd5]">
         <div className="border-b border-[#dedbd5] p-5">
           <p className="text-sm text-[#7a643e]">To {memorialName}</p>
@@ -765,7 +790,11 @@ function KioskLettersSection({
               setContent(event.target.value);
               setMessage("");
             }}
-            placeholder="전하고 싶은 마음을 남겨주세요."
+            placeholder={
+              isMemorialHall
+                ? "전하고 싶은 마음을 남겨주세요."
+                : "응원이나 감사의 마음을 남겨주세요."
+            }
             rows={4}
             className="mt-5 w-full resize-none bg-transparent text-lg leading-8 outline-none placeholder:text-[#aaa]"
           />
@@ -775,14 +804,20 @@ function KioskLettersSection({
             {message ||
               (isPrivate
                 ? "비공개 기념관 안에서만 보관됩니다."
-                : "남겨진 글은 가족의 마음글에 함께 모입니다.")}
+                : isMemorialHall
+                  ? "남겨진 글은 가족의 마음글에 함께 모입니다."
+                  : "감사와 응원의 글이 이 인생기념관에 함께 남습니다.")}
           </p>
           <button
             type="submit"
             disabled={createLetter.isPending}
             className="flex h-14 w-full items-center justify-center gap-2 bg-[#18181b] text-base font-medium text-white disabled:opacity-50"
           >
-            {createLetter.isPending ? "남기는 중" : "마음글 남기기"}
+            {createLetter.isPending
+              ? "남기는 중"
+              : isMemorialHall
+                ? "마음글 남기기"
+                : "감사글 남기기"}
             <Send className="h-4 w-4" />
           </button>
         </div>
@@ -791,7 +826,9 @@ function KioskLettersSection({
       <div className="mt-5 border-t border-[#dedbd5]">
         {lettersQuery.isLoading ? (
           <p className="border-b border-[#dedbd5] py-5 text-base text-[#64615d]">
-            마음글을 불러오고 있습니다.
+            {isMemorialHall
+              ? "마음글을 불러오고 있습니다."
+              : "감사글을 불러오고 있습니다."}
           </p>
         ) : letters.length ? (
           letters.slice(0, 4).map(letter => (
@@ -809,7 +846,9 @@ function KioskLettersSection({
           ))
         ) : (
           <p className="border-b border-[#dedbd5] py-5 text-base text-[#64615d]">
-            아직 남겨진 마음글이 없습니다.
+            {isMemorialHall
+              ? "아직 남겨진 마음글이 없습니다."
+              : "아직 남겨진 감사글이 없습니다."}
           </p>
         )}
       </div>
@@ -888,6 +927,22 @@ function splitParagraphs(value: string) {
     .split(/\n{2,}|\r?\n/)
     .map(line => line.trim())
     .filter(Boolean);
+}
+
+function isMemorialRecord(record?: {
+  recordType?: "faith" | "memorial";
+  deathDate?: string | null;
+}) {
+  return record?.recordType === "memorial" || Boolean(record?.deathDate?.trim());
+}
+
+function formatKioskYears(record: {
+  birthDate: string;
+  deathDate?: string | null;
+  recordType?: "faith" | "memorial";
+}) {
+  if (!isMemorialRecord(record)) return record.birthDate;
+  return [record.birthDate, record.deathDate].filter(Boolean).join(" - ");
 }
 
 function formatMemorialDay(value: string | null) {

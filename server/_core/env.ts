@@ -8,3 +8,29 @@ export const ENV = {
   forgeApiUrl: process.env.BUILT_IN_FORGE_API_URL ?? "",
   forgeApiKey: process.env.BUILT_IN_FORGE_API_KEY ?? "",
 };
+
+export function validateRuntimeEnv() {
+  if (!ENV.isProduction) return;
+
+  const errors: string[] = [];
+
+  if (!ENV.databaseUrl || ENV.databaseUrl.includes("user:password")) {
+    errors.push("DATABASE_URL must be configured for production.");
+  }
+
+  if (!ENV.appId) {
+    errors.push("VITE_APP_ID must be configured for production.");
+  }
+
+  if (
+    !ENV.cookieSecret ||
+    ENV.cookieSecret === "replace-with-a-long-random-secret" ||
+    ENV.cookieSecret.length < 32
+  ) {
+    errors.push("JWT_SECRET must be a production secret of at least 32 characters.");
+  }
+
+  if (errors.length > 0) {
+    throw new Error(`Production environment is not ready:\n${errors.join("\n")}`);
+  }
+}
