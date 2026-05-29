@@ -49,6 +49,9 @@ export type InsertUser = typeof users.$inferInsert;
 
 export const memorials = mysqlTable("memorials", {
   id: int("id").autoincrement().primaryKey(),
+  ownerUserId: int("ownerUserId").references(() => users.id, {
+    onDelete: "set null",
+  }),
   slug: varchar("slug", { length: 120 }).notNull().unique(),
   name: varchar("name", { length: 120 }).notNull(),
   role: varchar("role", { length: 80 }).notNull(),
@@ -84,7 +87,9 @@ export const memorials = mysqlTable("memorials", {
   managerMemo: text("managerMemo"),
   createdAt: timestamp("createdAt").defaultNow().notNull(),
   updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
-});
+}, table => [
+  index("memorials_ownerUserId_idx").on(table.ownerUserId),
+]);
 
 export type Memorial = typeof memorials.$inferSelect;
 export type InsertMemorial = typeof memorials.$inferInsert;

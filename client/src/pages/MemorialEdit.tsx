@@ -2,14 +2,7 @@ import { useAuth } from "@/_core/hooks/useAuth";
 import Footer from "@/components/Footer";
 import Navbar from "@/components/Navbar";
 import { trpc } from "@/lib/trpc";
-import {
-  ArrowLeft,
-  ArrowRight,
-  Check,
-  Plus,
-  Save,
-  Trash2,
-} from "lucide-react";
+import { ArrowLeft, ArrowRight, Check, Plus, Save, Trash2 } from "lucide-react";
 import { FormEvent, useEffect, useMemo, useState } from "react";
 import { Link, useRoute } from "wouter";
 
@@ -24,6 +17,7 @@ type TimelineItem = {
 
 type AdminMemorial = {
   id: number;
+  ownerUserId: number | null;
   slug: string;
   name: string;
   role: string;
@@ -137,25 +131,37 @@ const makeTimelineItem = (): TimelineItem => ({
 });
 
 export default function MemorialEdit() {
-  const [, params] = useRoute<{ slug: string }>(
+  const [isAdminRoute, adminParams] = useRoute<{ slug: string }>(
     "/admin/memorials/:slug/edit"
   );
-  const slug = params?.slug ?? "";
+  const [, myParams] = useRoute<{ slug: string }>(
+    "/mypage/memorials/:slug/edit"
+  );
+  const slug = adminParams?.slug ?? myParams?.slug ?? "";
   const { user, loading } = useAuth({ redirectOnUnauthenticated: true });
   const utils = trpc.useUtils();
-  const memorialQuery = trpc.memorial.adminBySlug.useQuery(
+  const adminMemorialQuery = trpc.memorial.adminBySlug.useQuery(
     { slug },
-    { enabled: Boolean(slug) && user?.role === "admin", retry: false }
+    {
+      enabled: Boolean(slug) && isAdminRoute && user?.role === "admin",
+      retry: false,
+    }
+  );
+  const myMemorialQuery = trpc.memorial.manageBySlug.useQuery(
+    { slug },
+    { enabled: Boolean(slug) && !isAdminRoute && Boolean(user), retry: false }
   );
   const updateMemorial = trpc.memorial.update.useMutation();
+  const updateMine = trpc.memorial.updateMine.useMutation();
 
   const [loadedId, setLoadedId] = useState<number | null>(null);
   const [form, setForm] = useState<FormState>(initialForm);
   const [timeline, setTimeline] = useState<TimelineItem[]>([]);
-  const [errors, setErrors] = useState<Partial<Record<keyof FormState, string>>>(
-    {}
-  );
+  const [errors, setErrors] = useState<
+    Partial<Record<keyof FormState, string>>
+  >({});
   const [notice, setNotice] = useState("");
+  const memorialQuery = isAdminRoute ? adminMemorialQuery : myMemorialQuery;
   const memorial = memorialQuery.data as AdminMemorial | undefined;
 
   useEffect(() => {
@@ -166,7 +172,8 @@ export default function MemorialEdit() {
       role: memorial.role,
       birthDate: memorial.birthDate,
       deathDate: memorial.deathDate,
-      recordType: memorial.recordType ?? (memorial.deathDate ? "memorial" : "faith"),
+      recordType:
+        memorial.recordType ?? (memorial.deathDate ? "memorial" : "faith"),
       church: memorial.church,
       familyContact: memorial.familyContact ?? "",
       familyPhone: memorial.familyPhone ?? "",
@@ -288,7 +295,7 @@ export default function MemorialEdit() {
 
     try {
       setNotice("수정 내용을 저장하고 있습니다.");
-      await updateMemorial.mutateAsync({
+      const payload = {
         id: memorial.id,
         name: form.name,
         role: form.role,
@@ -302,8 +309,10 @@ export default function MemorialEdit() {
         verseRef: form.verseRef || null,
         summary: form.summary,
         story: form.story,
-        serviceTime: form.recordType === "memorial" ? form.serviceTime || null : null,
-        memorialDay: form.recordType === "memorial" ? form.memorialDay || null : null,
+        serviceTime:
+          form.recordType === "memorial" ? form.serviceTime || null : null,
+        memorialDay:
+          form.recordType === "memorial" ? form.memorialDay || null : null,
         visibility: form.visibility,
         accessPassword: form.accessPassword.trim() || undefined,
         managerMemo: form.managerMemo || null,
@@ -312,13 +321,25 @@ export default function MemorialEdit() {
           title,
           description,
         })),
-      });
+      };
 
-      await Promise.all([
-        utils.memorial.adminBySlug.invalidate({ slug }),
-        utils.memorial.adminList.invalidate(),
-        utils.memorial.bySlug.invalidate({ slug }),
-      ]);
+      if (isAdminRoute) {
+        await updateMemorial.mutateAsync(payload);
+      } else {
+        await updateMine.mutateAsync(payload);
+      }
+
+      await Promise.all(
+        [
+          isAdminRoute
+            ? utils.memorial.adminBySlug.invalidate({ slug })
+            : utils.memorial.manageBySlug.invalidate({ slug }),
+          isAdminRoute
+            ? utils.memorial.adminList.invalidate()
+            : utils.memorial.myList.invalidate(),
+          utils.memorial.bySlug.invalidate({ slug }),
+        ].filter(Boolean)
+      );
       setForm(current => ({ ...current, accessPassword: "" }));
       setNotice("수정 내용이 저장되었습니다.");
     } catch (error) {
@@ -328,10 +349,10 @@ export default function MemorialEdit() {
   };
 
   if (loading) {
-    return <StateScreen text="관리자 권한을 확인하고 있습니다." />;
+    return <StateScreen text="수정 권한을 확인하고 있습니다." />;
   }
 
-  if (user?.role !== "admin") {
+  if (isAdminRoute && user?.role !== "admin") {
     return <StateScreen text="관리자만 접근할 수 있습니다." />;
   }
 
@@ -343,10 +364,10 @@ export default function MemorialEdit() {
         <section className="border-b border-[#dbdad7]">
           <div className="container grid gap-10 py-12 md:py-16 lg:grid-cols-[minmax(0,0.95fr)_minmax(320px,1.05fr)]">
             <div>
-              <Link href="/admin">
+              <Link href={isAdminRoute ? "/admin" : "/mypage"}>
                 <button className="mb-8 inline-flex h-10 items-center gap-2 border border-[#dbdad7] bg-white px-4 text-sm text-[#616161] transition-colors hover:text-[#121212]">
                   <ArrowLeft className="h-4 w-4" strokeWidth={1.7} />
-                  관리자 목록
+                  {isAdminRoute ? "관리자 목록" : "마이페이지"}
                 </button>
               </Link>
               <p className="mb-5 text-xs font-medium text-[#616161]">
@@ -563,7 +584,8 @@ export default function MemorialEdit() {
                         readOnly
                       />
                       <p className="mt-2 text-xs leading-5 text-[#8a8a8a]">
-                        주소 변경은 링크 공유에 영향을 줄 수 있어 별도 처리합니다.
+                        주소 변경은 링크 공유에 영향을 줄 수 있어 별도
+                        처리합니다.
                       </p>
                     </Field>
 
@@ -807,18 +829,20 @@ export default function MemorialEdit() {
                       </Field>
                     )}
 
-                    <div className="md:col-span-2">
-                      <Field label="관리 메모">
-                        <textarea
-                          className="min-h-28 w-full resize-y border border-[#dbdad7] bg-transparent p-4 text-sm leading-7 outline-none transition-colors placeholder:text-[#9a9a9a] focus:border-[#18181b]"
-                          value={form.managerMemo}
-                          onChange={event =>
-                            updateField("managerMemo", event.target.value)
-                          }
-                          placeholder="운영자가 참고할 메모"
-                        />
-                      </Field>
-                    </div>
+                    {isAdminRoute && (
+                      <div className="md:col-span-2">
+                        <Field label="관리 메모">
+                          <textarea
+                            className="min-h-28 w-full resize-y border border-[#dbdad7] bg-transparent p-4 text-sm leading-7 outline-none transition-colors placeholder:text-[#9a9a9a] focus:border-[#18181b]"
+                            value={form.managerMemo}
+                            onChange={event =>
+                              updateField("managerMemo", event.target.value)
+                            }
+                            placeholder="운영자가 참고할 메모"
+                          />
+                        </Field>
+                      </div>
+                    )}
                   </div>
                 </section>
 
@@ -845,11 +869,25 @@ export default function MemorialEdit() {
                       </Link>
                       <button
                         type="submit"
-                        disabled={updateMemorial.isPending}
+                        disabled={
+                          isAdminRoute
+                            ? updateMemorial.isPending
+                            : updateMine.isPending
+                        }
                         className="inline-flex h-11 items-center justify-center gap-2 bg-[#18181b] px-5 text-sm font-medium text-white transition-opacity hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-50"
                       >
-                        {updateMemorial.isPending ? "저장 중" : "수정 저장"}
-                        {updateMemorial.isPending ? (
+                        {(
+                          isAdminRoute
+                            ? updateMemorial.isPending
+                            : updateMine.isPending
+                        )
+                          ? "저장 중"
+                          : "수정 저장"}
+                        {(
+                          isAdminRoute
+                            ? updateMemorial.isPending
+                            : updateMine.isPending
+                        ) ? (
                           <Save className="h-4 w-4" strokeWidth={1.6} />
                         ) : (
                           <ArrowRight className="h-4 w-4" strokeWidth={1.6} />

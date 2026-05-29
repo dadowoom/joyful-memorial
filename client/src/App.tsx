@@ -9,6 +9,7 @@ import Home from "./pages/Home";
 import MemorialCreate from "./pages/MemorialCreate";
 import Letters from "./pages/Letters";
 import Login from "./pages/Login";
+import MyPage from "./pages/MyPage";
 import AdminMemorials from "./pages/AdminMemorials";
 import MemorialGarden from "./pages/MemorialGarden";
 import MemorialSearch from "./pages/MemorialSearch";
@@ -25,10 +26,12 @@ function Router() {
     <Switch>
       <Route path={"/"} component={Home} />
       <Route path={"/login"} component={Login} />
+      <Route path={"/mypage"} component={MyPage} />
       <Route path={"/kiosk/memorial/:slug"} component={KioskMemorial} />
       <Route path={"/kiosk"} component={Kiosk} />
       <Route path={"/admin"} component={AdminMemorials} />
       <Route path={"/admin/memorials/:slug/edit"} component={MemorialEdit} />
+      <Route path={"/mypage/memorials/:slug/edit"} component={MemorialEdit} />
       <Route path={"/memorial/create"} component={MemorialCreate} />
       <Route path={"/letters"} component={Letters} />
       <Route path={"/memorial-garden"} component={MemorialGarden} />

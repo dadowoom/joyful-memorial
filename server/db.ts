@@ -228,6 +228,18 @@ export async function createLocalUser(input: {
   return created;
 }
 
+export async function updateUserPassword(userId: number, password: string) {
+  const db = await getDb();
+  if (!db) {
+    throw new Error("Database is not available");
+  }
+
+  await db
+    .update(users)
+    .set({ passwordHash: hashUserPassword(password) })
+    .where(eq(users.id, userId));
+}
+
 export function normalizeMemorialSlug(name: string, requestedSlug?: string) {
   const source = (requestedSlug || name || "memorial").trim().toLowerCase();
   const normalized = source
@@ -382,6 +394,56 @@ export async function listAdminMemorials() {
     .limit(500);
 }
 
+export async function listUserMemorials(ownerUserId: number) {
+  const db = await getDb();
+  if (!db) {
+    throw new Error("Database is not available");
+  }
+
+  const rows = await db
+    .select({
+      id: memorials.id,
+      slug: memorials.slug,
+      name: memorials.name,
+      role: memorials.role,
+      birthDate: memorials.birthDate,
+      deathDate: memorials.deathDate,
+      recordType: memorials.recordType,
+      church: memorials.church,
+      familyContact: memorials.familyContact,
+      familyPhone: memorials.familyPhone,
+      visibility: memorials.visibility,
+      status: memorials.status,
+      memorialDay: memorials.memorialDay,
+      createdAt: memorials.createdAt,
+      updatedAt: memorials.updatedAt,
+      accessPasswordHash: memorials.accessPasswordHash,
+      photoUrl: memorialGalleryPhotos.photoUrl,
+      familyRoomId: memorialFamilyRooms.id,
+    })
+    .from(memorials)
+    .leftJoin(
+      memorialGalleryPhotos,
+      and(
+        eq(memorialGalleryPhotos.memorialId, memorials.id),
+        eq(memorialGalleryPhotos.isRepresentative, 1)
+      )
+    )
+    .leftJoin(
+      memorialFamilyRooms,
+      eq(memorialFamilyRooms.memorialId, memorials.id)
+    )
+    .where(eq(memorials.ownerUserId, ownerUserId))
+    .orderBy(desc(memorials.updatedAt), desc(memorials.createdAt))
+    .limit(100);
+
+  return rows.map(({ accessPasswordHash, familyRoomId, ...row }) => ({
+    ...row,
+    hasAccessPassword: Boolean(accessPasswordHash),
+    hasFamilyRoom: Boolean(familyRoomId),
+  }));
+}
+
 export async function getAdminMemorialBySlug(slug: string) {
   const db = await getDb();
   if (!db) {
@@ -499,6 +561,38 @@ export async function updateMemorial(
   await db.update(memorials).set(data).where(eq(memorials.id, id));
 }
 
+export async function deleteMemorial(id: number) {
+  const db = await getDb();
+  if (!db) {
+    throw new Error("Database is not available");
+  }
+
+  const books = await db
+    .select({ id: memorialBooks.id })
+    .from(memorialBooks)
+    .where(eq(memorialBooks.memorialId, id));
+
+  for (const book of books) {
+    await db
+      .delete(memorialBookPages)
+      .where(eq(memorialBookPages.bookId, book.id));
+  }
+
+  await db.delete(memorialBooks).where(eq(memorialBooks.memorialId, id));
+  await db.delete(memorialVideos).where(eq(memorialVideos.memorialId, id));
+  await db
+    .delete(memorialGalleryPhotos)
+    .where(eq(memorialGalleryPhotos.memorialId, id));
+  await db.delete(memorialLetters).where(eq(memorialLetters.memorialId, id));
+  await db
+    .delete(memorialReminderSubscriptions)
+    .where(eq(memorialReminderSubscriptions.memorialId, id));
+  await db
+    .delete(memorialFamilyRooms)
+    .where(eq(memorialFamilyRooms.memorialId, id));
+  await db.delete(memorials).where(eq(memorials.id, id));
+}
+
 export function hashFamilyRoomPassword(password: string) {
   return createHash("sha256")
     .update(`joyful-family:${password}`)
@@ -509,6 +603,45 @@ export function hashMemorialAccessPassword(password: string) {
   return createHash("sha256")
     .update(`joyful-memorial-access:${password}`)
     .digest("hex");
+}
+
+export async function upsertMemorialFamilyRoomPassword(
+  memorialId: number,
+  password: string
+) {
+  const db = await getDb();
+  if (!db) {
+    throw new Error("Database is not available");
+  }
+
+  const memorial = await db
+    .select({
+      id: memorials.id,
+      name: memorials.name,
+    })
+    .from(memorials)
+    .where(eq(memorials.id, memorialId))
+    .limit(1);
+
+  const target = memorial[0];
+  if (!target) return null;
+
+  await db
+    .insert(memorialFamilyRooms)
+    .values({
+      memorialId: target.id,
+      passwordHash: hashFamilyRoomPassword(password),
+      title: `${target.name} 가족관`,
+      intro:
+        "가족에게만 남기고 싶은 사진, 이야기, 약속을 조용히 모아두는 공간입니다.",
+    })
+    .onDuplicateKeyUpdate({
+      set: {
+        passwordHash: hashFamilyRoomPassword(password),
+      },
+    });
+
+  return { success: true };
 }
 
 export function createMemorialAccessToken(

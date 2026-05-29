@@ -10,6 +10,7 @@ import {
   createLocalUser,
   createMemorialReminderSubscription,
   canReadMemorial,
+  deleteMemorial,
   getAdminMemorialById,
   getAdminMemorialBySlug,
   getUserByEmail,
@@ -21,9 +22,12 @@ import {
   listMemorialLetters,
   listPublicMemorials,
   listRecentMemorialLetters,
+  listUserMemorials,
   normalizeEmail,
   searchPublicMemorials,
   updateMemorial,
+  updateUserPassword,
+  upsertMemorialFamilyRoomPassword,
   upsertUser,
   verifyUserPassword,
   verifyMemorialAccessPassword,
@@ -140,6 +144,14 @@ const authLoginInput = z.object({
   password: z.string().min(1, "비밀번호를 입력해주세요.").max(100),
 });
 
+const authChangePasswordInput = z.object({
+  currentPassword: z.string().min(1, "현재 비밀번호를 입력해주세요.").max(100),
+  newPassword: z
+    .string()
+    .min(8, "새 비밀번호는 8자 이상 입력해주세요.")
+    .max(100),
+});
+
 const textDisplaySizeSchema = z.enum(["auto", "small", "normal", "large"]);
 
 const memorialUpdateInput = z.object({
@@ -196,6 +208,122 @@ const toPublicUser = (user: User) => ({
   createdAt: user.createdAt,
   lastSignedIn: user.lastSignedIn,
 });
+
+const parseTimelineJson = (timelineJson?: string | null) => {
+  if (!timelineJson) return [];
+
+  try {
+    const timeline = JSON.parse(timelineJson);
+    if (!Array.isArray(timeline)) return [];
+    return timeline.filter(
+      item =>
+        typeof item === "object" &&
+        item !== null &&
+        typeof item.year === "string" &&
+        typeof item.title === "string" &&
+        typeof item.description === "string"
+    );
+  } catch {
+    return [];
+  }
+};
+
+type EditableMemorial = NonNullable<
+  Awaited<ReturnType<typeof getAdminMemorialBySlug>>
+>;
+
+const toEditableMemorial = (
+  memorial: EditableMemorial,
+  options: { includeManagerMemo?: boolean } = {}
+) => {
+  const { accessPasswordHash, ...safeMemorial } = memorial;
+
+  return {
+    ...safeMemorial,
+    managerMemo: options.includeManagerMemo ? memorial.managerMemo : null,
+    timeline: parseTimelineJson(memorial.timelineJson),
+    hasAccessPassword: Boolean(accessPasswordHash),
+    href:
+      memorial.visibility !== "private" && memorial.recordType === "faith"
+        ? `/memorial/${memorial.slug}/archive`
+        : `/memorial/${memorial.slug}`,
+  };
+};
+
+const ensureOwnMemorial = async (slug: string, user: User) => {
+  const memorial = await getAdminMemorialBySlug(slug);
+  if (!memorial) {
+    throw new TRPCError({
+      code: "NOT_FOUND",
+      message: "기념관을 찾을 수 없습니다.",
+    });
+  }
+
+  if (memorial.ownerUserId !== user.id) {
+    throw new TRPCError({
+      code: "FORBIDDEN",
+      message: "이 기념관을 관리할 권한이 없습니다.",
+    });
+  }
+
+  return memorial;
+};
+
+const makeMemorialUpdateData = (
+  input: z.infer<typeof memorialUpdateInput>,
+  existing: Pick<EditableMemorial, "accessPasswordHash">,
+  options: { allowManagerMemo: boolean; allowStatus: boolean }
+) => {
+  const {
+    id: _id,
+    accessPassword,
+    timeline,
+    visibility,
+    status,
+    managerMemo,
+    ...data
+  } = input;
+
+  const updateData: Parameters<typeof updateMemorial>[1] = {
+    ...data,
+  };
+
+  if (options.allowManagerMemo && managerMemo !== undefined) {
+    updateData.managerMemo = managerMemo;
+  }
+
+  if (data.recordType === "faith") {
+    updateData.deathDate = "";
+    updateData.memorialDay = null;
+  }
+
+  if (visibility) {
+    updateData.visibility = visibility;
+    updateData.status = visibility === "private" ? "private" : "published";
+  } else if (options.allowStatus && status) {
+    updateData.status = status;
+  }
+
+  if (timeline) {
+    const cleanedTimeline = timeline.filter(
+      item => item.year || item.title || item.description
+    );
+    updateData.timelineJson = JSON.stringify(cleanedTimeline);
+  }
+
+  if (visibility === "public") {
+    updateData.accessPasswordHash = null;
+  } else if (accessPassword?.trim()) {
+    updateData.accessPasswordHash = hashMemorialAccessPassword(accessPassword);
+  } else if (visibility === "private" && !existing.accessPasswordHash) {
+    throw new TRPCError({
+      code: "BAD_REQUEST",
+      message: "비공개 기념관은 입장 비밀번호가 필요합니다.",
+    });
+  }
+
+  return updateData;
+};
 
 export const appRouter = router({
   // if you need to use socket.io, read and register route in server/_core/index.ts, all api should start with '/api/' so that the gateway can route correctly
@@ -287,6 +415,22 @@ export const appRouter = router({
         success: true,
       } as const;
     }),
+    changePassword: protectedProcedure
+      .input(authChangePasswordInput)
+      .mutation(async ({ ctx, input }) => {
+        if (
+          !ctx.user.passwordHash ||
+          !verifyUserPassword(input.currentPassword, ctx.user.passwordHash)
+        ) {
+          throw new TRPCError({
+            code: "UNAUTHORIZED",
+            message: "현재 비밀번호가 맞지 않습니다.",
+          });
+        }
+
+        await updateUserPassword(ctx.user.id, input.newPassword);
+        return { success: true };
+      }),
   }),
 
   memorial: router({
@@ -314,27 +458,27 @@ export const appRouter = router({
           });
         }
 
-        let timeline: Array<{
-          year: string;
-          title: string;
-          description: string;
-        }> = [];
+        return toEditableMemorial(memorial, { includeManagerMemo: true });
+      }),
 
-        if (memorial.timelineJson) {
-          try {
-            timeline = JSON.parse(memorial.timelineJson);
-          } catch {
-            timeline = [];
-          }
-        }
+    myList: protectedProcedure.query(async ({ ctx }) => {
+      const memorials = await listUserMemorials(ctx.user.id);
+      return memorials.map(memorial => ({
+        ...memorial,
+        isPrivate: memorial.visibility === "private",
+        href:
+          memorial.visibility !== "private" && memorial.recordType === "faith"
+            ? `/memorial/${memorial.slug}/archive`
+            : `/memorial/${memorial.slug}`,
+        editHref: `/mypage/memorials/${memorial.slug}/edit`,
+      }));
+    }),
 
-        const { accessPasswordHash, ...safeMemorial } = memorial;
-        return {
-          ...safeMemorial,
-          timeline,
-          hasAccessPassword: Boolean(accessPasswordHash),
-          href: `/memorial/${memorial.slug}`,
-        };
+    manageBySlug: protectedProcedure
+      .input(z.object({ slug: z.string().trim().min(1).max(120) }))
+      .query(async ({ ctx, input }) => {
+        const memorial = await ensureOwnMemorial(input.slug, ctx.user);
+        return toEditableMemorial(memorial, { includeManagerMemo: false });
       }),
 
     list: publicProcedure.query(async () => {
@@ -452,7 +596,7 @@ export const appRouter = router({
 
     create: protectedProcedure
       .input(memorialCreateInput)
-      .mutation(async ({ input }) => {
+      .mutation(async ({ ctx, input }) => {
         if (input.visibility === "private" && !input.accessPassword?.trim()) {
           throw new TRPCError({
             code: "BAD_REQUEST",
@@ -465,6 +609,7 @@ export const appRouter = router({
         );
 
         const created = await createMemorial({
+          ownerUserId: ctx.user.id,
           name: input.name,
           role: input.role,
           birthDate: input.birthDate,
@@ -524,9 +669,7 @@ export const appRouter = router({
     update: adminProcedure
       .input(memorialUpdateInput)
       .mutation(async ({ input }) => {
-        const { id, accessPassword, timeline, visibility, status, ...data } =
-          input;
-        const existing = await getAdminMemorialById(id);
+        const existing = await getAdminMemorialById(input.id);
         if (!existing) {
           throw new TRPCError({
             code: "NOT_FOUND",
@@ -534,43 +677,98 @@ export const appRouter = router({
           });
         }
 
-        const updateData: Parameters<typeof updateMemorial>[1] = {
-          ...data,
-        };
+        const updateData = makeMemorialUpdateData(input, existing, {
+          allowManagerMemo: true,
+          allowStatus: true,
+        });
+        await updateMemorial(input.id, updateData);
+        return { success: true };
+      }),
 
-        if (data.recordType === "faith") {
-          updateData.deathDate = "";
-          updateData.memorialDay = null;
-        }
-
-        if (visibility) {
-          updateData.visibility = visibility;
-          updateData.status =
-            visibility === "private" ? "private" : "published";
-        } else if (status) {
-          updateData.status = status;
-        }
-
-        if (timeline) {
-          const cleanedTimeline = timeline.filter(
-            item => item.year || item.title || item.description
-          );
-          updateData.timelineJson = JSON.stringify(cleanedTimeline);
-        }
-
-        if (visibility === "public") {
-          updateData.accessPasswordHash = null;
-        } else if (accessPassword?.trim()) {
-          updateData.accessPasswordHash =
-            hashMemorialAccessPassword(accessPassword);
-        } else if (visibility === "private" && !existing.accessPasswordHash) {
+    updateMine: protectedProcedure
+      .input(memorialUpdateInput)
+      .mutation(async ({ ctx, input }) => {
+        const existing = await getAdminMemorialById(input.id);
+        if (!existing) {
           throw new TRPCError({
-            code: "BAD_REQUEST",
-            message: "비공개 기념관은 입장 비밀번호가 필요합니다.",
+            code: "NOT_FOUND",
+            message: "기념관을 찾을 수 없습니다.",
           });
         }
 
-        await updateMemorial(id, updateData);
+        if (existing.ownerUserId !== ctx.user.id) {
+          throw new TRPCError({
+            code: "FORBIDDEN",
+            message: "이 기념관을 관리할 권한이 없습니다.",
+          });
+        }
+
+        const updateData = makeMemorialUpdateData(input, existing, {
+          allowManagerMemo: false,
+          allowStatus: false,
+        });
+        await updateMemorial(input.id, updateData);
+        return { success: true };
+      }),
+
+    updateAccessPassword: protectedProcedure
+      .input(
+        z.object({
+          slug: z.string().trim().min(1).max(120),
+          password: z.string().trim().min(4).max(80),
+        })
+      )
+      .mutation(async ({ ctx, input }) => {
+        const memorial = await ensureOwnMemorial(input.slug, ctx.user);
+        await updateMemorial(memorial.id, {
+          visibility: "private",
+          status: "private",
+          accessPasswordHash: hashMemorialAccessPassword(input.password),
+        });
+
+        return { success: true };
+      }),
+
+    updateFamilyPassword: protectedProcedure
+      .input(
+        z.object({
+          slug: z.string().trim().min(1).max(120),
+          password: z.string().trim().min(4).max(80),
+        })
+      )
+      .mutation(async ({ ctx, input }) => {
+        const memorial = await ensureOwnMemorial(input.slug, ctx.user);
+        const result = await upsertMemorialFamilyRoomPassword(
+          memorial.id,
+          input.password
+        );
+        if (!result) {
+          throw new TRPCError({
+            code: "NOT_FOUND",
+            message: "기념관을 찾을 수 없습니다.",
+          });
+        }
+
+        return { success: true };
+      }),
+
+    deleteMine: protectedProcedure
+      .input(
+        z.object({
+          slug: z.string().trim().min(1).max(120),
+          confirmName: z.string().trim().min(1).max(120),
+        })
+      )
+      .mutation(async ({ ctx, input }) => {
+        const memorial = await ensureOwnMemorial(input.slug, ctx.user);
+        if (input.confirmName !== memorial.name) {
+          throw new TRPCError({
+            code: "BAD_REQUEST",
+            message: "삭제 확인을 위해 성함을 정확히 입력해주세요.",
+          });
+        }
+
+        await deleteMemorial(memorial.id);
         return { success: true };
       }),
   }),

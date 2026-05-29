@@ -77,9 +77,9 @@ export default function Navbar() {
                     </span>
                   </Link>
                 )}
-                <Link href="/">
+                <Link href="/mypage">
                   <span className="text-sm text-[#686257] transition-colors hover:text-[#29251d]">
-                    {user?.name || "계정"}
+                    마이페이지
                   </span>
                 </Link>
                 <button
@@ -138,15 +138,26 @@ export default function Navbar() {
             )}
             <div className="mt-3 border-t border-[#e8decd] pt-4">
               {isAuthenticated ? (
-                <button
-                  onClick={() => {
-                    logout();
-                    closeMobile();
-                  }}
-                  className="h-10 w-full rounded-full border border-[#e8decd] bg-white text-sm text-[#29251d]"
-                >
-                  로그아웃
-                </button>
+                <div className="grid gap-2">
+                  <Link href="/mypage">
+                    <button
+                      type="button"
+                      onClick={closeMobile}
+                      className="h-10 w-full rounded-full bg-[#29251d] text-sm font-medium text-white"
+                    >
+                      마이페이지
+                    </button>
+                  </Link>
+                  <button
+                    onClick={() => {
+                      logout();
+                      closeMobile();
+                    }}
+                    className="h-10 w-full rounded-full border border-[#e8decd] bg-white text-sm text-[#29251d]"
+                  >
+                    로그아웃
+                  </button>
+                </div>
               ) : (
                 <a href={getLoginUrl()} onClick={closeMobile}>
                   <button className="h-10 w-full rounded-full bg-[#29251d] text-sm font-medium text-white">
