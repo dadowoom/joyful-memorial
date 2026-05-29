@@ -110,6 +110,19 @@ const visibilityOptions: Array<{
   },
 ];
 
+const roleSuggestions = [
+  "아버지",
+  "어머니",
+  "할아버지",
+  "할머니",
+  "큰아버지",
+  "큰어머니",
+  "외할아버지",
+  "외할머니",
+  "선생님",
+  "가족",
+];
+
 const inputClass =
   "h-12 w-full border-0 border-b border-[#dbdad7] bg-transparent px-0 text-sm text-[#121212] outline-none transition-colors placeholder:text-[#9a9a9a] focus:border-[#18181b]";
 const selectClass =
@@ -425,7 +438,7 @@ export default function MemorialEdit() {
 
               {memorial && (
                 <div className="mt-6 border-t border-[#dbdad7] pt-5">
-                  <p className="text-xs text-[#616161]">기념관 주소</p>
+                  <p className="text-xs text-[#616161]">인생기념관 주소(URL)</p>
                   <p className="mt-2 break-all text-sm text-[#121212]">
                     /memorial/{memorial.slug}
                   </p>
@@ -464,7 +477,7 @@ export default function MemorialEdit() {
                       href="#timeline"
                       className="block transition-colors hover:text-[#121212]"
                     >
-                      생애 기록
+                      연표 기록
                     </a>
                     <a
                       href="#settings"
@@ -495,21 +508,20 @@ export default function MemorialEdit() {
                     </Field>
 
                     <Field label="호칭" error={errors.role} required>
-                      <select
-                        className={selectClass}
+                      <input
+                        className={inputClass}
+                        list="edit-role-suggestions"
                         value={form.role}
                         onChange={event =>
                           updateField("role", event.target.value)
                         }
-                      >
-                        <option value="">선택해 주세요</option>
-                        <option value="아버지">아버지</option>
-                        <option value="어머니">어머니</option>
-                        <option value="할아버지">할아버지</option>
-                        <option value="할머니">할머니</option>
-                        <option value="가족">가족</option>
-                        <option value="선생님">선생님</option>
-                      </select>
+                        placeholder="아버지, 할머니, 큰아빠 등"
+                      />
+                      <datalist id="edit-role-suggestions">
+                        {roleSuggestions.map(role => (
+                          <option key={role} value={role} />
+                        ))}
+                      </datalist>
                     </Field>
 
                     <Field label="운영 모드">
@@ -567,17 +579,7 @@ export default function MemorialEdit() {
                       </Field>
                     )}
 
-                    <Field label="가족/지역">
-                      <input
-                        className={inputClass}
-                        value={form.church}
-                        onChange={event =>
-                          updateField("church", event.target.value)
-                        }
-                      />
-                    </Field>
-
-                    <Field label="기념관 주소">
+                    <Field label="인생기념관 주소(URL)">
                       <input
                         className={`${inputClass} text-[#9a9a9a]`}
                         value={memorial.slug}
@@ -692,7 +694,7 @@ export default function MemorialEdit() {
                   id="timeline"
                   className="scroll-mt-24 border border-[#dbdad7] p-5 md:p-8"
                 >
-                  <SectionHeader number="03" title="생애 기록" />
+                  <SectionHeader number="03" title="연표 기록" />
 
                   <div className="space-y-5">
                     {timeline.map((item, index) => (

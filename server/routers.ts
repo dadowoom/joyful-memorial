@@ -5,6 +5,8 @@ import { z } from "zod";
 import type { User } from "../drizzle/schema";
 import {
   createMemorial,
+  createMemorialBook,
+  createMemorialBookPage,
   createMemorialGalleryPhoto,
   createMemorialLetter,
   createLocalUser,
@@ -20,6 +22,7 @@ import {
   hashMemorialAccessPassword,
   listAdminMemorials,
   listMemorialLetters,
+  listMemorialBooks,
   listPublicMemorials,
   listRecentMemorialLetters,
   listUserMemorials,
@@ -58,7 +61,15 @@ const memorialCreateInput = z.object({
   church: z.string().trim().max(160).default("우리 가족"),
   familyContact: z.string().trim().max(120).optional(),
   familyPhone: z.string().trim().max(80).optional(),
-  slug: z.string().trim().max(120).optional(),
+  slug: z
+    .string()
+    .trim()
+    .min(3)
+    .max(120)
+    .regex(/^[a-z0-9]+(?:-[a-z0-9]+)*$/, {
+      message: "주소는 영문 소문자, 숫자, 하이픈(-)만 사용할 수 있습니다.",
+    })
+    .optional(),
   verse: z.string().trim().max(1000).optional(),
   verseRef: z.string().trim().max(120).optional(),
   summary: z.string().trim().min(1).max(255),
@@ -90,6 +101,23 @@ const memorialCreateInput = z.object({
       })
     )
     .max(7)
+    .default([]),
+  bookPages: z
+    .array(
+      z.object({
+        year: z.string().trim().max(20).optional(),
+        title: z.string().trim().max(300).optional(),
+        content: z.string().trim().max(20000).optional(),
+        dateYear: z.number().min(1800).max(2200).optional(),
+        photo: z
+          .object({
+            dataUrl: z.string().max(8_500_000),
+            fileName: z.string().trim().min(1).max(240),
+          })
+          .optional(),
+      })
+    )
+    .max(20)
     .default([]),
 });
 
@@ -658,6 +686,68 @@ export const appRouter = router({
             });
           })
         );
+
+        const bookPages = input.bookPages.filter(
+          page =>
+            page.year?.trim() ||
+            page.title?.trim() ||
+            page.content?.trim() ||
+            page.photo
+        );
+
+        if (bookPages.length > 0) {
+          const uploadedPagePhotos = await Promise.all(
+            bookPages.map(async page => {
+              if (!page.photo) return { url: null, key: null };
+
+              const { buffer, mimeType, ext } = decodeImageDataUrl(
+                page.photo.dataUrl
+              );
+              const key = `book-pages/${created.id}/${nanoid()}.${ext}`;
+              const { url } = await storagePut(key, buffer, mimeType);
+              return { url, key };
+            })
+          );
+          const coverPhoto =
+            uploadedPagePhotos.find(photo => photo.url && photo.key) ?? null;
+
+          const bookTitle = `${created.name}의 인생 이야기`;
+          await createMemorialBook({
+            memorialId: created.id,
+            title: bookTitle,
+            subtitle: "사진과 글로 남기는 가족의 기록",
+            coverPhotoUrl: coverPhoto?.url ?? null,
+            coverPhotoKey: coverPhoto?.key ?? null,
+            publishedYear: new Date().getFullYear().toString(),
+            sortOrder: 0,
+          });
+
+          const [book] = await listMemorialBooks(created.id);
+          if (book) {
+            await Promise.all(
+              bookPages.map(async (page, index) => {
+                const pagePhoto = uploadedPagePhotos[index];
+
+                const yearFromText =
+                  page.year?.trim().match(/^\d{4}$/)?.[0] ?? null;
+
+                await createMemorialBookPage({
+                  bookId: book.id,
+                  title: page.title || "삶의 한 장",
+                  content: page.content || null,
+                  photoUrl: pagePhoto?.url ?? null,
+                  photoKey: pagePhoto?.key ?? null,
+                  dateYear:
+                    page.dateYear ??
+                    (yearFromText ? Number(yearFromText) : null),
+                  dateMonth: null,
+                  dateDay: null,
+                  sortOrder: index,
+                });
+              })
+            );
+          }
+        }
 
         return {
           id: created.id,

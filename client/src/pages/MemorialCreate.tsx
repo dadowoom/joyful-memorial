@@ -18,11 +18,17 @@ import {
 import { ChangeEvent, FormEvent, useEffect, useMemo, useState } from "react";
 import { Link, useLocation } from "wouter";
 
+type SelectedPhoto = CompressedImage & {
+  caption?: string;
+  year?: string;
+};
+
 type TimelineItem = {
   id: string;
   year: string;
   title: string;
   description: string;
+  photo?: SelectedPhoto | null;
 };
 
 type Visibility = "public" | "private";
@@ -54,11 +60,6 @@ type CreatedMemorial = {
   href: string;
 };
 
-type SelectedPhoto = CompressedImage & {
-  caption?: string;
-  year?: string;
-};
-
 const draftKey = "joyful.memorialCreateDraft";
 
 const initialForm: MemorialForm = {
@@ -85,6 +86,7 @@ const requiredFields: Array<{ key: keyof MemorialForm; label: string }> = [
   { key: "name", label: "성함" },
   { key: "role", label: "호칭" },
   { key: "birthDate", label: "출생일" },
+  { key: "slug", label: "인생기념관 주소(URL)" },
   { key: "summary", label: "한 줄 소개" },
   { key: "story", label: "삶의 기록" },
 ];
@@ -106,10 +108,21 @@ const visibilityOptions: Array<{
   },
 ];
 
+const roleSuggestions = [
+  "아버지",
+  "어머니",
+  "할아버지",
+  "할머니",
+  "큰아버지",
+  "큰어머니",
+  "외할아버지",
+  "외할머니",
+  "선생님",
+  "가족",
+];
+
 const inputClass =
   "h-12 w-full border-0 border-b border-[#dbdad7] bg-transparent px-0 text-sm text-[#121212] outline-none transition-colors placeholder:text-[#9a9a9a] focus:border-[#18181b]";
-const selectClass =
-  "h-12 w-full border-0 border-b border-[#dbdad7] bg-transparent px-0 text-sm text-[#121212] outline-none transition-colors focus:border-[#18181b]";
 const textAreaClass =
   "min-h-36 w-full resize-y border border-[#dbdad7] bg-transparent p-4 text-sm leading-7 text-[#121212] outline-none transition-colors placeholder:text-[#9a9a9a] focus:border-[#18181b]";
 const labelClass = "mb-2 block text-xs font-medium text-[#616161]";
@@ -133,7 +146,22 @@ const makeTimelineItem = (): TimelineItem => ({
   year: "",
   title: "",
   description: "",
+  photo: null,
 });
+
+const sanitizeSlug = (value: string) =>
+  value
+    .toLowerCase()
+    .replace(/[^a-z0-9-]/g, "")
+    .replace(/-+/g, "-")
+    .replace(/^-+/g, "");
+
+const isValidSlug = (value: string) => /^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(value);
+
+const toBookPageYear = (year: string) => {
+  const match = year.trim().match(/^\d{4}$/);
+  return match ? Number(match[0]) : undefined;
+};
 
 export default function MemorialCreate() {
   const [, setLocation] = useLocation();
@@ -183,6 +211,7 @@ export default function MemorialCreate() {
             year: item.year || "",
             title: item.title || "",
             description: item.description || "",
+            photo: null,
           }))
         );
       }
@@ -202,9 +231,8 @@ export default function MemorialCreate() {
 
   const slugPreview = useMemo(() => {
     if (form.slug.trim()) return form.slug.trim();
-    if (form.name.trim()) return form.name.trim().replace(/\s+/g, "-");
-    return "memorial-name";
-  }, [form.name, form.slug]);
+    return "life-story-url";
+  }, [form.slug]);
 
   const missingLabels = useMemo(
     () =>
@@ -215,7 +243,8 @@ export default function MemorialCreate() {
   );
 
   const updateField = (key: keyof MemorialForm, value: string) => {
-    setForm(current => ({ ...current, [key]: value }));
+    const nextValue = key === "slug" ? sanitizeSlug(value) : value;
+    setForm(current => ({ ...current, [key]: nextValue }));
     setErrors(current => ({ ...current, [key]: undefined }));
     setSubmitted(false);
     setCreatedMemorial(null);
@@ -244,6 +273,22 @@ export default function MemorialCreate() {
     setTimeline(items =>
       items.map(item => (item.id === id ? { ...item, [field]: value } : item))
     );
+  };
+
+  const updateTimelinePhoto = async (
+    id: string,
+    event: ChangeEvent<HTMLInputElement>
+  ) => {
+    const file = event.target.files?.[0];
+    event.target.value = "";
+    if (!file) return;
+
+    const photo = await compressImageFile(file, { maxBytes: 2_500_000 });
+    setTimeline(items =>
+      items.map(item => (item.id === id ? { ...item, photo } : item))
+    );
+    setSubmitted(false);
+    setCreatedMemorial(null);
   };
 
   const addTimeline = () => {
@@ -280,7 +325,13 @@ export default function MemorialCreate() {
   };
 
   const saveDraft = () => {
-    localStorage.setItem(draftKey, JSON.stringify({ form, timeline }));
+    localStorage.setItem(
+      draftKey,
+      JSON.stringify({
+        form,
+        timeline: timeline.map(({ photo: _photo, ...item }) => item),
+      })
+    );
     setNotice(
       "임시저장되었습니다. 이 브라우저에서 다시 이어서 작성할 수 있습니다."
     );
@@ -299,6 +350,11 @@ export default function MemorialCreate() {
     if (form.visibility === "private" && !form.accessPassword.trim()) {
       nextErrors.accessPassword =
         "비공개 인생기념관 입장 비밀번호를 입력해 주세요.";
+    }
+
+    if (form.slug.trim() && !isValidSlug(form.slug.trim())) {
+      nextErrors.slug =
+        "주소는 영문 소문자, 숫자, 하이픈(-)만 사용할 수 있습니다.";
     }
 
     setErrors(nextErrors);
@@ -327,6 +383,26 @@ export default function MemorialCreate() {
           title,
           description,
         })),
+        bookPages: timeline
+          .filter(
+            ({ year, title, description, photo }) =>
+              year.trim() ||
+              title.trim() ||
+              description.trim() ||
+              Boolean(photo)
+          )
+          .map(({ year, title, description, photo }) => ({
+            year,
+            title,
+            content: description,
+            dateYear: toBookPageYear(year),
+            photo: photo
+              ? {
+                  dataUrl: photo.dataUrl,
+                  fileName: photo.fileName,
+                }
+              : undefined,
+          })),
         photos: [
           ...(portraitPhoto
             ? [
@@ -406,16 +482,16 @@ export default function MemorialCreate() {
                 className="text-4xl font-normal leading-tight md:text-6xl"
                 style={{ fontFamily: "'Noto Serif KR', serif" }}
               >
-                감사의 기억을
+                기쁨의 삶을
                 <br />
-                만드세요
+                기록하세요
               </h1>
               <p className="mt-6 max-w-md text-sm leading-7 text-[#616161]">
                 <span className="block">
-                  사랑하는 분의 삶과 이야기를 조용히 담아
+                  사진과 글을 더하면 한 권의 책처럼 정리됩니다.
                 </span>
                 <span className="block">
-                  가족과 가까운 사람들이 함께 기록할 수 있는 인생기념관을 남겨보세요.
+                  가족과 가까운 사람들이 함께 읽는 인생기념관을 남겨보세요.
                 </span>
               </p>
             </div>
@@ -443,7 +519,7 @@ export default function MemorialCreate() {
               </div>
 
               <div className="mt-6 grid gap-px bg-[#dbdad7] sm:grid-cols-3">
-                {["정보 입력", "기록 정리", "등록 완료"].map((step, index) => (
+                {["정보 입력", "책장 작성", "등록 완료"].map((step, index) => (
                   <div key={step} className="bg-white p-4">
                     <p className="text-xs text-[#616161]">
                       {String(index + 1).padStart(2, "0")}
@@ -494,7 +570,7 @@ export default function MemorialCreate() {
                     href="#timeline"
                     className="block transition-colors hover:text-[#121212]"
                   >
-                    생애 기록
+                    책장 페이지
                   </a>
                   <a
                     href="#photos"
@@ -540,22 +616,21 @@ export default function MemorialCreate() {
                   </Field>
 
                   <Field label="호칭" error={errors.role} required>
-                    <select
-                      className={selectClass}
+                    <input
+                      className={inputClass}
+                      list="role-suggestions"
                       value={form.role}
                       onChange={event =>
                         updateField("role", event.target.value)
                       }
+                      placeholder="아버지, 할머니, 큰아빠 등"
                       aria-invalid={Boolean(errors.role)}
-                    >
-                      <option value="">선택해 주세요</option>
-                      <option value="아버지">아버지</option>
-                      <option value="어머니">어머니</option>
-                      <option value="할아버지">할아버지</option>
-                      <option value="할머니">할머니</option>
-                      <option value="가족">가족</option>
-                      <option value="선생님">선생님</option>
-                    </select>
+                    />
+                    <datalist id="role-suggestions">
+                      {roleSuggestions.map(role => (
+                        <option key={role} value={role} />
+                      ))}
+                    </datalist>
                   </Field>
 
                   <Field label="출생일" error={errors.birthDate} required>
@@ -570,26 +645,27 @@ export default function MemorialCreate() {
                     />
                   </Field>
 
-                  <Field label="가족/지역">
-                    <input
-                      className={inputClass}
-                      value={form.church}
-                      onChange={event =>
-                        updateField("church", event.target.value)
-                      }
-                      placeholder="우리 가족 / 서울 / 고향"
-                    />
-                  </Field>
-
-                  <Field label="인생기념관 주소">
+                  <Field
+                    label="인생기념관 주소(URL)"
+                    error={errors.slug}
+                    required
+                  >
                     <input
                       className={inputClass}
                       value={form.slug}
                       onChange={event =>
                         updateField("slug", event.target.value)
                       }
-                      placeholder={slugPreview}
+                      placeholder="lee-insik"
+                      inputMode="url"
+                      autoCapitalize="none"
+                      spellCheck={false}
+                      aria-invalid={Boolean(errors.slug)}
                     />
+                    <p className="mt-2 text-xs leading-5 text-[#8a8a8a]">
+                      영문 소문자, 숫자, 하이픈(-)만 사용할 수 있습니다. 예:
+                      /memorial/{slugPreview}/archive
+                    </p>
                   </Field>
 
                   <Field label="가족 대표 성함">
@@ -670,7 +746,6 @@ export default function MemorialCreate() {
                       aria-invalid={Boolean(errors.story)}
                     />
                   </Field>
-
                 </div>
               </section>
 
@@ -678,17 +753,21 @@ export default function MemorialCreate() {
                 id="timeline"
                 className="scroll-mt-24 border border-[#dbdad7] p-5 md:p-8"
               >
-                <SectionHeader number="03" title="생애 기록" />
+                <SectionHeader number="03" title="책장 페이지" />
+                <p className="mb-6 text-sm leading-7 text-[#616161]">
+                  빈 책에 사진과 글을 한 장씩 채운다고 생각하고 작성해 주세요.
+                  저장하면 책장 보기와 연표 보기에 함께 정리됩니다.
+                </p>
 
                 <div className="space-y-6">
                   {timeline.map((item, index) => (
                     <div
                       key={item.id}
-                      className="grid gap-4 border-b border-[#dbdad7] pb-6 last:border-b-0 last:pb-0"
+                      className="border border-[#dbdad7] bg-[#fffefa] p-4 md:p-5"
                     >
                       <div className="flex items-center justify-between gap-4">
-                        <p className="text-sm text-[#616161]">
-                          기록 {index + 1}
+                        <p className="text-sm font-medium text-[#121212]">
+                          책장 페이지 {index + 1}
                         </p>
                         {timeline.length > 1 && (
                           <button
@@ -702,37 +781,95 @@ export default function MemorialCreate() {
                         )}
                       </div>
 
-                      <div className="grid gap-6 md:grid-cols-[120px_minmax(0,1fr)]">
-                        <input
-                          className={inputClass}
-                          value={item.year}
-                          onChange={event =>
-                            updateTimeline(item.id, "year", event.target.value)
-                          }
-                          placeholder="연도"
-                        />
-                        <input
-                          className={inputClass}
-                          value={item.title}
-                          onChange={event =>
-                            updateTimeline(item.id, "title", event.target.value)
-                          }
-                          placeholder="제목"
-                        />
-                      </div>
+                      <div className="mt-4 grid gap-5 lg:grid-cols-[260px_minmax(0,1fr)]">
+                        <div>
+                          <label className={labelClass}>사진</label>
+                          <label className="flex aspect-[4/3] w-full flex-col items-center justify-center overflow-hidden border border-dashed border-[#dbdad7] bg-white text-center text-sm text-[#616161] transition-colors hover:border-[#18181b] hover:text-[#121212]">
+                            {item.photo ? (
+                              <img
+                                src={item.photo.dataUrl}
+                                alt={`책장 페이지 ${index + 1} 사진`}
+                                className="h-full w-full object-cover saturate-[1.05] contrast-[1.01] brightness-[1.02]"
+                              />
+                            ) : (
+                              <>
+                                <ImagePlus
+                                  className="mb-2 h-5 w-5"
+                                  strokeWidth={1.5}
+                                />
+                                사진 넣기
+                              </>
+                            )}
+                            <input
+                              type="file"
+                              accept="image/*"
+                              onChange={event =>
+                                updateTimelinePhoto(item.id, event)
+                              }
+                              className="sr-only"
+                            />
+                          </label>
+                          {item.photo && (
+                            <button
+                              type="button"
+                              onClick={() =>
+                                setTimeline(items =>
+                                  items.map(current =>
+                                    current.id === item.id
+                                      ? { ...current, photo: null }
+                                      : current
+                                  )
+                                )
+                              }
+                              className="mt-2 text-xs text-[#616161] underline-offset-4 hover:text-[#121212] hover:underline"
+                            >
+                              사진 빼기
+                            </button>
+                          )}
+                        </div>
 
-                      <textarea
-                        className="min-h-24 w-full resize-y border border-[#dbdad7] bg-transparent p-4 text-sm leading-7 text-[#121212] outline-none transition-colors placeholder:text-[#9a9a9a] focus:border-[#18181b]"
-                        value={item.description}
-                        onChange={event =>
-                          updateTimeline(
-                            item.id,
-                            "description",
-                            event.target.value
-                          )
-                        }
-                        placeholder="간단한 설명"
-                      />
+                        <div className="space-y-4">
+                          <div className="grid gap-4 md:grid-cols-[120px_minmax(0,1fr)]">
+                            <input
+                              className={inputClass}
+                              value={item.year}
+                              onChange={event =>
+                                updateTimeline(
+                                  item.id,
+                                  "year",
+                                  event.target.value
+                                )
+                              }
+                              placeholder="연도"
+                            />
+                            <input
+                              className={inputClass}
+                              value={item.title}
+                              onChange={event =>
+                                updateTimeline(
+                                  item.id,
+                                  "title",
+                                  event.target.value
+                                )
+                              }
+                              placeholder="페이지 제목"
+                            />
+                          </div>
+
+                          <textarea
+                            className="min-h-32 w-full resize-y border border-[#dbdad7] bg-white p-4 text-sm leading-7 text-[#121212] outline-none transition-colors placeholder:text-[#9a9a9a] focus:border-[#18181b]"
+                            value={item.description}
+                            onChange={event =>
+                              updateTimeline(
+                                item.id,
+                                "description",
+                                event.target.value
+                              )
+                            }
+                            placeholder="사진에 담긴 일, 그때의 마음, 가족이 기억하고 싶은 내용을 적어 주세요."
+                          />
+                        </div>
+                      </div>
                     </div>
                   ))}
                 </div>
@@ -743,7 +880,7 @@ export default function MemorialCreate() {
                   className="mt-6 inline-flex h-11 items-center gap-2 border border-[#dbdad7] px-4 text-sm transition-colors hover:bg-[#f6f5f2]"
                 >
                   <Plus className="h-4 w-4" strokeWidth={1.6} />
-                  기록 추가
+                  책장 페이지 추가
                 </button>
               </section>
 
@@ -933,9 +1070,8 @@ export default function MemorialCreate() {
                       <dl className="mt-4 grid gap-3 text-sm text-[#616161] sm:grid-cols-2">
                         <SummaryItem label="성함" value={form.name} />
                         <SummaryItem label="호칭" value={form.role} />
-                        <SummaryItem label="가족/지역" value={form.church} />
                         <SummaryItem
-                          label="주소"
+                          label="인생기념관 주소(URL)"
                           value={
                             createdMemorial?.href || `/memorial/${slugPreview}`
                           }

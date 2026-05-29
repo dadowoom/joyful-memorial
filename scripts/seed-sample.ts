@@ -54,8 +54,7 @@ async function main() {
       verse:
         "가족의 하루가 평안하기를 바라며, 작은 일에도 고맙다는 말을 아끼지 않던 사람",
       verseRef: "가족이 기억하는 말",
-      summary:
-        "성실함과 다정함으로 가족의 중심이 되어준 어머니",
+      summary: "성실함과 다정함으로 가족의 중심이 되어준 어머니",
       story:
         "정기쁨 어머니는 집 안의 작은 일들을 허투루 넘기지 않고, 가족이 편안히 하루를 보낼 수 있도록 늘 먼저 움직이던 분입니다.\n\n화려한 말보다 따뜻한 밥상과 조용한 배려로 마음을 전했고, 자녀와 손주들에게는 성실하게 살아가는 태도를 몸으로 보여주었습니다. 가족은 어머니의 사진과 말, 함께 보낸 계절들을 이곳에 천천히 모아가고 있습니다.",
       servicePlace: null,
@@ -72,12 +71,14 @@ async function main() {
         {
           year: "1978",
           title: "가정을 꾸리다",
-          description: "가족의 일상을 돌보며 단단한 집의 시간을 만들어 갔습니다.",
+          description:
+            "가족의 일상을 돌보며 단단한 집의 시간을 만들어 갔습니다.",
         },
         {
           year: "2004",
           title: "손주들과 보낸 계절",
-          description: "손주들의 이름을 하나하나 불러주며 다정한 추억을 남겼습니다.",
+          description:
+            "손주들의 이름을 하나하나 불러주며 다정한 추억을 남겼습니다.",
         },
         {
           year: "현재",
@@ -106,17 +107,20 @@ async function main() {
           {
             year: "1978",
             title: "가정을 꾸리다",
-            description: "가족의 일상을 돌보며 단단한 집의 시간을 만들어 갔습니다.",
+            description:
+              "가족의 일상을 돌보며 단단한 집의 시간을 만들어 갔습니다.",
           },
           {
             year: "2004",
             title: "손주들과 보낸 계절",
-            description: "손주들의 이름을 하나하나 불러주며 다정한 추억을 남겼습니다.",
+            description:
+              "손주들의 이름을 하나하나 불러주며 다정한 추억을 남겼습니다.",
           },
           {
             year: "현재",
             title: "이어지는 인생 기록",
-            description: "가족과 가까운 사람들이 감사의 마음을 함께 기록합니다.",
+            description:
+              "가족과 가까운 사람들이 감사의 마음을 함께 기록합니다.",
           },
         ]),
         recordType: "faith",
@@ -292,7 +296,7 @@ async function ensureVideo(memorialId: number) {
     await db
       .update(memorialVideos)
       .set({
-        title: "감사의 기억",
+        title: "기쁨의 기록",
         description: "가족이 직접 등록할 영상을 위한 샘플 항목입니다.",
         isVisible: 0,
         sortOrder: 0,
@@ -303,7 +307,7 @@ async function ensureVideo(memorialId: number) {
   }
   await db.insert(memorialVideos).values({
     memorialId,
-    title: "감사의 기억",
+    title: "기쁨의 기록",
     description: "가족이 직접 등록할 영상을 위한 샘플 항목입니다.",
     youtubeVideoId,
     isVisible: 0,
@@ -371,7 +375,9 @@ async function ensureBookPages(bookId: number) {
   const db = await getDb();
   if (!db) throw new Error("Database is not available.");
 
-  await db.delete(memorialBookPages).where(eq(memorialBookPages.bookId, bookId));
+  await db
+    .delete(memorialBookPages)
+    .where(eq(memorialBookPages.bookId, bookId));
 
   await db.insert(memorialBookPages).values([
     {

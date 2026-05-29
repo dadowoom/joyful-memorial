@@ -50,7 +50,7 @@ const SERVICES = [
   },
   {
     title: "인생기념관 만들기",
-    desc: "회원가입 또는 로그인 후 기본 정보, 삶의 이야기, 생애 기록, 사진을 등록합니다.",
+    desc: "회원가입 또는 로그인 후 기본 정보, 삶의 이야기, 책장 페이지, 사진을 등록합니다.",
     icon: PenLine,
     href: "/memorial/create",
   },
@@ -134,7 +134,8 @@ export default function Home() {
                 style={{ color: muted }}
               >
                 부모님의 인생과 가족의 기억을 밝은 인생기념관으로 남깁니다.
-                사진, 영상, 글을 통해 평범하지만 소중했던 시간을 오래 보관합니다.
+                사진, 영상, 글을 통해 평범하지만 소중했던 시간을 오래
+                보관합니다.
               </p>
 
               <form
@@ -372,7 +373,7 @@ export default function Home() {
                 </h2>
               </div>
               <Link href="/letters">
-              <button
+                <button
                   className="inline-flex h-11 items-center justify-center gap-2 rounded-full border px-4 text-sm font-medium"
                   style={{ borderColor: line, color: ink }}
                 >
@@ -439,7 +440,7 @@ export default function Home() {
                   className="text-2xl font-normal md:text-3xl"
                   style={serifStyle}
                 >
-                  감사의 기억을 오늘 남겨보세요.
+                  기쁨의 기록을 오늘 남겨보세요.
                 </h2>
                 <p
                   className="mt-3 max-w-2xl text-sm leading-7"
