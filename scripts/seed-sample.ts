@@ -417,28 +417,10 @@ async function ensureLetter(memorialId: number) {
 
   const content =
     "어머니, 함께 먹던 밥상과 조용히 건네주시던 따뜻한 말들을 기억합니다. 감사한 마음이 우리 안에 오래 이어지기를 바랍니다.";
-  const [existing] = await db
-    .select({ id: memorialLetters.id })
-    .from(memorialLetters)
-    .where(
-      eq(memorialLetters.memorialId, memorialId)
-    )
-    .limit(1);
+  await db
+    .delete(memorialLetters)
+    .where(eq(memorialLetters.memorialId, memorialId));
 
-  if (existing) {
-    await db
-      .update(memorialLetters)
-      .set({
-        recipientName: "정기쁨",
-        recipientRole: "어머니",
-        author: "정하은",
-        content,
-        status: "published",
-        updatedAt: new Date(),
-      })
-      .where(eq(memorialLetters.id, existing.id));
-    return;
-  }
   await db.insert(memorialLetters).values({
     memorialId,
     recipientName: "정기쁨",
