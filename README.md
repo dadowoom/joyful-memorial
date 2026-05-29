@@ -12,19 +12,31 @@
 ## 실행
 
 ```bash
-npm install
+pnpm install --frozen-lockfile
 cp .env.example .env
-npm run dev
+pnpm dev
 ```
 
 DB가 준비된 뒤:
 
 ```bash
-npm run db:push
-npm run db:seed
+pnpm run db:push
+pnpm run db:seed
 ```
 
 `SAMPLE_FAMILY_ROOM_PASSWORD`를 설정하면 샘플 인물의 가족관도 함께 생성됩니다.
+
+## 작업 지시문
+
+다른 컴퓨터나 다음 작업자가 이어받을 때는 [docs/WORK_INSTRUCTIONS.md](docs/WORK_INSTRUCTIONS.md)를 먼저 확인합니다.
+
+기본 검증:
+
+```bash
+pnpm check
+pnpm test
+pnpm build
+```
 
 ## 주요 경로
 
