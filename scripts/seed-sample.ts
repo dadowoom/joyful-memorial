@@ -147,6 +147,58 @@ async function main() {
     sortOrder: 0,
     isRepresentative: 1,
   });
+  await Promise.all(
+    [
+      {
+        photoUrl: "/sample-gallery/jung-family-table.jpg",
+        photoKey: "seed/jung-gippeum/family-table",
+        caption: "가족이 함께 모인 저녁 식탁",
+        year: "2024",
+      },
+      {
+        photoUrl: "/sample-gallery/jung-pohang-homigot.jpg",
+        photoKey: "seed/jung-gippeum/pohang-homigot",
+        caption: "포항 호미곶에서 맞이한 아침",
+        year: "2023",
+      },
+      {
+        photoUrl: "/sample-gallery/jung-pohang-seaside.jpg",
+        photoKey: "seed/jung-gippeum/pohang-seaside",
+        caption: "딸과 손주와 걸었던 포항 바닷길",
+        year: "2022",
+      },
+      {
+        photoUrl: "/sample-gallery/jung-jukdo-market.jpg",
+        photoKey: "seed/jung-gippeum/jukdo-market",
+        caption: "죽도시장에서 장을 보던 평범한 하루",
+        year: "2021",
+      },
+      {
+        photoUrl: "/sample-gallery/jung-kimchi-day.jpg",
+        photoKey: "seed/jung-gippeum/kimchi-day",
+        caption: "이웃들과 함께한 김장하던 날",
+        year: "2019",
+      },
+      {
+        photoUrl: "/sample-gallery/jung-young-pohang-harbor.jpg",
+        photoKey: "seed/jung-gippeum/young-pohang-harbor",
+        caption: "젊은 시절 포항 항구에서 남긴 가족사진",
+        year: "1981",
+      },
+      {
+        photoUrl: "/sample-gallery/jung-garden-grandchild.jpg",
+        photoKey: "seed/jung-gippeum/garden-grandchild",
+        caption: "손주와 함께 돌보던 집 앞 작은 텃밭",
+        year: "2020",
+      },
+    ].map((photo, index) =>
+      ensureGalleryPhoto(memorial.id, {
+        ...photo,
+        sortOrder: index + 1,
+        isRepresentative: 0,
+      })
+    )
+  );
 
   await ensureVideo(memorial.id);
   const bookId = await ensureBook(memorial.id);
@@ -207,6 +259,7 @@ async function ensureGalleryPhoto(
     await db
       .update(memorialGalleryPhotos)
       .set({
+        photoUrl: photo.photoUrl,
         caption: photo.caption,
         year: photo.year,
         sortOrder: photo.sortOrder,
