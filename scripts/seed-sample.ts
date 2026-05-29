@@ -202,7 +202,7 @@ async function main() {
 
   await ensureVideo(memorial.id);
   const bookId = await ensureBook(memorial.id);
-  await ensureBookPage(bookId);
+  await ensureBookPages(bookId);
   await ensureLetter(memorial.id);
 
   if (process.env.SAMPLE_FAMILY_ROOM_PASSWORD) {
@@ -367,48 +367,98 @@ async function ensureBook(memorialId: number) {
   return created.id;
 }
 
-async function ensureBookPage(bookId: number) {
+async function ensureBookPages(bookId: number) {
   const db = await getDb();
   if (!db) throw new Error("Database is not available.");
 
-  const title = "가족과 함께한 감사";
-  const [existing] = await db
-    .select({ id: memorialBookPages.id })
-    .from(memorialBookPages)
-    .where(
-      and(
-        eq(memorialBookPages.bookId, bookId),
-        eq(memorialBookPages.title, title)
-      )
-    )
-    .limit(1);
+  await db.delete(memorialBookPages).where(eq(memorialBookPages.bookId, bookId));
 
-  if (existing) {
-    await db
-      .update(memorialBookPages)
-      .set({
-        content:
-          "정기쁨 어머니는 늘 조용한 환대와 꾸준한 돌봄으로 가족 곁에 있었습니다. 그 기억은 가족에게 감사의 언어로 남아 있습니다.",
-        photoUrl: "/sample-jung-gippeum.png",
-        photoKey: "seed/jung-gippeum/portrait",
-        dateYear: 2004,
-        updatedAt: new Date(),
-      })
-      .where(eq(memorialBookPages.id, existing.id));
-    return;
-  }
-  await db.insert(memorialBookPages).values({
-    bookId,
-    title,
-    content:
-      "정기쁨 어머니는 늘 조용한 환대와 꾸준한 돌봄으로 가족 곁에 있었습니다. 그 기억은 가족에게 감사의 언어로 남아 있습니다.",
-    photoUrl: "/sample-jung-gippeum.png",
-    photoKey: "seed/jung-gippeum/portrait",
-    dateYear: 2004,
-    dateMonth: null,
-    dateDay: null,
-    sortOrder: 0,
-  });
+  await db.insert(memorialBookPages).values([
+    {
+      bookId,
+      title: "젊은 날, 포항 항구에서",
+      content:
+        "젊은 시절의 정기쁨 어머니는 포항 항구의 바람처럼 부지런하고 단단했습니다. 가족을 위해 하루를 세우고, 작은 약속도 허투루 넘기지 않던 태도가 이후의 삶을 오래 지탱했습니다.",
+      photoUrl: "/sample-gallery/jung-young-pohang-harbor.jpg",
+      photoKey: "seed/jung-gippeum/young-pohang-harbor",
+      dateYear: 1981,
+      dateMonth: null,
+      dateDay: null,
+      sortOrder: 0,
+    },
+    {
+      bookId,
+      title: "밥상에 모인 가족",
+      content:
+        "가족이 한자리에 모이는 날이면 어머니의 손길은 늘 식탁 위에 먼저 닿았습니다. 특별한 말보다 따뜻한 밥 한 끼로 서로의 안부를 챙기게 했고, 그 시간이 가족의 중심이 되었습니다.",
+      photoUrl: "/sample-gallery/jung-family-table.jpg",
+      photoKey: "seed/jung-gippeum/family-table",
+      dateYear: 2024,
+      dateMonth: null,
+      dateDay: null,
+      sortOrder: 1,
+    },
+    {
+      bookId,
+      title: "죽도시장의 평범한 하루",
+      content:
+        "죽도시장을 걷던 하루에는 어머니의 생활 감각이 고스란히 묻어 있습니다. 좋은 것을 고르고, 필요한 만큼 나누고, 집으로 돌아와 가족을 위해 다시 하루를 차리는 평범함이 삶의 기록이 되었습니다.",
+      photoUrl: "/sample-gallery/jung-jukdo-market.jpg",
+      photoKey: "seed/jung-gippeum/jukdo-market",
+      dateYear: 2021,
+      dateMonth: null,
+      dateDay: null,
+      sortOrder: 2,
+    },
+    {
+      bookId,
+      title: "함께 담근 김장",
+      content:
+        "김장하던 날의 사진에는 이웃과 가족이 함께 움직이던 계절의 온도가 남아 있습니다. 어머니는 손이 많이 가는 일도 웃으며 나누었고, 그 넉넉함은 오래 기억되는 생활의 지혜가 되었습니다.",
+      photoUrl: "/sample-gallery/jung-kimchi-day.jpg",
+      photoKey: "seed/jung-gippeum/kimchi-day",
+      dateYear: 2019,
+      dateMonth: null,
+      dateDay: null,
+      sortOrder: 3,
+    },
+    {
+      bookId,
+      title: "손주와 돌본 작은 텃밭",
+      content:
+        "집 앞 텃밭은 손주와 이야기를 나누는 작은 교실이었습니다. 씨앗을 심고 기다리는 법, 자란 것을 아끼는 법, 함께 돌보는 기쁨을 어머니는 말보다 행동으로 알려주었습니다.",
+      photoUrl: "/sample-gallery/jung-garden-grandchild.jpg",
+      photoKey: "seed/jung-gippeum/garden-grandchild",
+      dateYear: 2020,
+      dateMonth: null,
+      dateDay: null,
+      sortOrder: 4,
+    },
+    {
+      bookId,
+      title: "포항 바닷길을 걷다",
+      content:
+        "딸과 손주와 함께 걸었던 바닷길은 가족에게 조용한 선물처럼 남아 있습니다. 바람을 맞으며 나란히 걷던 시간 속에서, 가족은 어머니의 곁이 얼마나 든든했는지 다시 느꼈습니다.",
+      photoUrl: "/sample-gallery/jung-pohang-seaside.jpg",
+      photoKey: "seed/jung-gippeum/pohang-seaside",
+      dateYear: 2022,
+      dateMonth: null,
+      dateDay: null,
+      sortOrder: 5,
+    },
+    {
+      bookId,
+      title: "호미곶의 아침",
+      content:
+        "호미곶에서 맞이한 아침은 가족이 함께 바라본 새로운 시작의 장면입니다. 어머니가 남긴 성실함과 다정함은 오늘의 가족에게도 하루를 잘 살아가게 하는 힘으로 이어지고 있습니다.",
+      photoUrl: "/sample-gallery/jung-pohang-homigot.jpg",
+      photoKey: "seed/jung-gippeum/pohang-homigot",
+      dateYear: 2023,
+      dateMonth: null,
+      dateDay: null,
+      sortOrder: 6,
+    },
+  ]);
 }
 
 async function ensureLetter(memorialId: number) {
