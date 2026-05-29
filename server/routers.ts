@@ -555,7 +555,7 @@ export const appRouter = router({
           accessToken: z.string().trim().max(128).optional(),
         })
       )
-      .query(async ({ input }) => {
+      .query(async ({ ctx, input }) => {
         const memorial = await getPublicMemorialBySlug(input.slug);
         if (!memorial) {
           throw new TRPCError({
@@ -564,7 +564,10 @@ export const appRouter = router({
           });
         }
 
-        if (!canReadMemorial(memorial, input.accessToken)) {
+        const canManage =
+          ctx.user?.role === "admin" || memorial.ownerUserId === ctx.user?.id;
+
+        if (!canManage && !canReadMemorial(memorial, input.accessToken)) {
           throw new TRPCError({
             code: "FORBIDDEN",
             message: "비공개 기념관입니다.",
@@ -585,12 +588,13 @@ export const appRouter = router({
           }
         }
 
-        const { accessPasswordHash, ...safeMemorial } = memorial;
+        const { accessPasswordHash, ownerUserId, ...safeMemorial } = memorial;
 
         return {
           ...safeMemorial,
           timeline,
           href: `/memorial/${safeMemorial.slug}`,
+          canManage,
         };
       }),
 
@@ -788,7 +792,7 @@ export const appRouter = router({
           accessToken: z.string().trim().max(128).optional(),
         })
       )
-      .query(async ({ input }) => {
+      .query(async ({ ctx, input }) => {
         const memorial = await getPublicMemorialBySlug(input.memorialSlug);
         if (!memorial) {
           throw new TRPCError({
@@ -796,7 +800,9 @@ export const appRouter = router({
             message: "기념관을 찾을 수 없습니다.",
           });
         }
-        if (!canReadMemorial(memorial, input.accessToken)) {
+        const canManage =
+          ctx.user?.role === "admin" || memorial.ownerUserId === ctx.user?.id;
+        if (!canManage && !canReadMemorial(memorial, input.accessToken)) {
           throw new TRPCError({
             code: "FORBIDDEN",
             message: "비공개 기념관입니다.",
@@ -809,7 +815,7 @@ export const appRouter = router({
 
     create: publicProcedure
       .input(letterCreateInput)
-      .mutation(async ({ input }) => {
+      .mutation(async ({ ctx, input }) => {
         if (input.memorialSlug) {
           const memorial = await getPublicMemorialBySlug(input.memorialSlug);
           if (!memorial) {
@@ -818,7 +824,9 @@ export const appRouter = router({
               message: "기념관을 찾을 수 없습니다.",
             });
           }
-          if (!canReadMemorial(memorial, input.accessToken)) {
+          const canManage =
+            ctx.user?.role === "admin" || memorial.ownerUserId === ctx.user?.id;
+          if (!canManage && !canReadMemorial(memorial, input.accessToken)) {
             throw new TRPCError({
               code: "FORBIDDEN",
               message: "비공개 기념관입니다.",

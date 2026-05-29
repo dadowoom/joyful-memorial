@@ -5,15 +5,61 @@ import {
   createMemorialBookPage,
   deleteMemorialBook,
   deleteMemorialBookPage,
+  getAdminMemorialById,
   getMemorialBookById,
+  getMemorialBookPageById,
   listMemorialBookPages,
   listMemorialBooks,
   updateMemorialBook,
   updateMemorialBookPage,
 } from "../db";
-import { adminProcedure, publicProcedure, router } from "../_core/trpc";
+import { protectedProcedure, publicProcedure, router } from "../_core/trpc";
+import type { User } from "../../drizzle/schema";
 
 const nullableText = z.string().trim().nullable().optional();
+
+async function assertCanManageMemorial(memorialId: number, user: User) {
+  const memorial = await getAdminMemorialById(memorialId);
+  if (!memorial) {
+    throw new TRPCError({
+      code: "NOT_FOUND",
+      message: "기념관을 찾을 수 없습니다.",
+    });
+  }
+
+  if (user.role !== "admin" && memorial.ownerUserId !== user.id) {
+    throw new TRPCError({
+      code: "FORBIDDEN",
+      message: "이 기념관을 관리할 권한이 없습니다.",
+    });
+  }
+}
+
+async function assertCanManageBook(bookId: number, user: User) {
+  const book = await getMemorialBookById(bookId);
+  if (!book) {
+    throw new TRPCError({
+      code: "NOT_FOUND",
+      message: "책을 찾을 수 없습니다.",
+    });
+  }
+
+  await assertCanManageMemorial(book.memorialId, user);
+  return book;
+}
+
+async function assertCanManagePage(pageId: number, user: User) {
+  const page = await getMemorialBookPageById(pageId);
+  if (!page) {
+    throw new TRPCError({
+      code: "NOT_FOUND",
+      message: "페이지를 찾을 수 없습니다.",
+    });
+  }
+
+  await assertCanManageBook(page.bookId, user);
+  return page;
+}
 
 export const bookRouter = router({
   listByMemorial: publicProcedure
@@ -41,7 +87,7 @@ export const bookRouter = router({
       return { ...book, pages: await listMemorialBookPages(book.id) };
     }),
 
-  create: adminProcedure
+  create: protectedProcedure
     .input(
       z.object({
         memorialId: z.number(),
@@ -53,7 +99,8 @@ export const bookRouter = router({
         sortOrder: z.number().optional(),
       })
     )
-    .mutation(async ({ input }) => {
+    .mutation(async ({ ctx, input }) => {
+      await assertCanManageMemorial(input.memorialId, ctx.user);
       await createMemorialBook({
         memorialId: input.memorialId,
         title: input.title,
@@ -66,7 +113,7 @@ export const bookRouter = router({
       return { success: true };
     }),
 
-  update: adminProcedure
+  update: protectedProcedure
     .input(
       z.object({
         id: z.number(),
@@ -78,20 +125,22 @@ export const bookRouter = router({
         sortOrder: z.number().optional(),
       })
     )
-    .mutation(async ({ input }) => {
+    .mutation(async ({ ctx, input }) => {
       const { id, ...data } = input;
+      await assertCanManageBook(id, ctx.user);
       await updateMemorialBook(id, data);
       return { success: true };
     }),
 
-  delete: adminProcedure
+  delete: protectedProcedure
     .input(z.object({ id: z.number() }))
-    .mutation(async ({ input }) => {
+    .mutation(async ({ ctx, input }) => {
+      await assertCanManageBook(input.id, ctx.user);
       await deleteMemorialBook(input.id);
       return { success: true };
     }),
 
-  addPage: adminProcedure
+  addPage: protectedProcedure
     .input(
       z.object({
         bookId: z.number(),
@@ -105,7 +154,8 @@ export const bookRouter = router({
         sortOrder: z.number().optional(),
       })
     )
-    .mutation(async ({ input }) => {
+    .mutation(async ({ ctx, input }) => {
+      await assertCanManageBook(input.bookId, ctx.user);
       await createMemorialBookPage({
         bookId: input.bookId,
         title: input.title || null,
@@ -120,7 +170,7 @@ export const bookRouter = router({
       return { success: true };
     }),
 
-  updatePage: adminProcedure
+  updatePage: protectedProcedure
     .input(
       z.object({
         id: z.number(),
@@ -134,15 +184,17 @@ export const bookRouter = router({
         sortOrder: z.number().optional(),
       })
     )
-    .mutation(async ({ input }) => {
+    .mutation(async ({ ctx, input }) => {
       const { id, ...data } = input;
+      await assertCanManagePage(id, ctx.user);
       await updateMemorialBookPage(id, data);
       return { success: true };
     }),
 
-  deletePage: adminProcedure
+  deletePage: protectedProcedure
     .input(z.object({ id: z.number() }))
-    .mutation(async ({ input }) => {
+    .mutation(async ({ ctx, input }) => {
+      await assertCanManagePage(input.id, ctx.user);
       await deleteMemorialBookPage(input.id);
       return { success: true };
     }),

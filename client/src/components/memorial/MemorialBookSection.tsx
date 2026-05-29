@@ -48,7 +48,7 @@ type MemorialBookSectionProps = {
 
 type ViewMode = "book" | "timeline";
 
-const memorialPhotoFilter = "grayscale(1) contrast(1.04) brightness(1.02)";
+const memorialPhotoFilter = "saturate(1.08) contrast(1.01) brightness(1.02)";
 
 function formatDate(year?: number | null, month?: number | null, day?: number | null) {
   if (!year) return "";
@@ -78,7 +78,7 @@ const CoverPage = forwardRef<HTMLDivElement, { book: MemorialBook }>(
       >
         <div className="mb-8 h-px w-16 bg-[#7f673d]" />
         <p className="mb-5 text-[11px] uppercase tracking-[0.28em] text-[#7f673d]">
-          The Book Of Life
+          Life Story Book
         </p>
         <h3
           className="text-3xl font-light leading-tight text-[#2e2218]"
@@ -91,7 +91,7 @@ const CoverPage = forwardRef<HTMLDivElement, { book: MemorialBook }>(
         )}
         <p className="mt-10 inline-flex items-center gap-2 text-xs text-[#7f673d]">
           <BookOpen className="h-3.5 w-3.5" />
-          넘겨서 읽어주세요
+          사진과 글을 넘겨서 읽어주세요
         </p>
       </div>
     );
@@ -146,13 +146,13 @@ const EndPage = forwardRef<HTMLDivElement>(function EndPage(_, ref) {
       className="flex h-full flex-col items-center justify-center bg-[#fffefa] p-8 text-center"
     >
       <p className="text-xs uppercase tracking-[0.28em] text-[#7f673d]">
-        Soli Deo Gloria
+        Life Archive
       </p>
       <p
         className="mt-5 text-2xl font-light text-[#2e2218]"
         style={{ fontFamily: "'Noto Serif KR', serif" }}
       >
-        오직 하나님께 영광
+        함께 남긴 삶의 기록
       </p>
     </div>
   );
@@ -245,7 +245,7 @@ export default function MemorialBookSection({
       <div className="container">
         <div className="mx-auto mb-10 max-w-3xl text-center">
           <p className="mb-3 text-xs font-medium uppercase tracking-[0.28em] text-[#7f673d]">
-            The Book Of Life
+            Life Story Book
           </p>
           <h2
             className="text-3xl font-light md:text-4xl"
@@ -254,7 +254,7 @@ export default function MemorialBookSection({
             책장과 연표
           </h2>
           <p className="mt-4 text-sm leading-7 text-[#6f6a61]">
-            페이지마다 날짜와 사진, 이야기를 담아 더 깊은 기록을 남깁니다.
+            글을 적고 사진을 올리면 책 모양과 연표로 자동 정리됩니다.
           </p>
         </div>
 
@@ -324,7 +324,7 @@ export default function MemorialBookSection({
                     }
                     if (event.key === "Escape") setAddingBook(false);
                   }}
-                  placeholder="책 제목"
+                  placeholder="예: 삶의 이야기"
                   className="h-10 border border-[#e6ded1] bg-white px-3 text-sm outline-none"
                   autoFocus
                 />
@@ -356,7 +356,7 @@ export default function MemorialBookSection({
                 className="inline-flex h-10 items-center gap-2 border border-dashed border-[#c8b383] bg-white px-4 text-sm text-[#4f4638]"
               >
                 <Plus className="h-4 w-4" />
-                책 추가
+                책 만들기
               </button>
             )}
 
@@ -368,7 +368,7 @@ export default function MemorialBookSection({
                   className="inline-flex h-10 items-center gap-2 border border-[#e6ded1] bg-white px-4 text-sm text-[#4f4638]"
                 >
                   <Plus className="h-4 w-4" />
-                  페이지 추가
+                  글/사진 페이지 추가
                 </button>
                 <button
                   type="button"
@@ -422,8 +422,29 @@ export default function MemorialBookSection({
           )
         ) : (
           isAdmin && (
-            <div className="border border-dashed border-[#e6ded1] bg-white py-16 text-center text-sm text-[#6f6a61]">
-              첫 번째 책을 추가해 주세요.
+            <div className="mx-auto max-w-2xl border border-dashed border-[#e6ded1] bg-white px-6 py-16 text-center text-sm text-[#6f6a61]">
+              <BookOpen className="mx-auto mb-4 h-8 w-8 text-[#7f673d]" />
+              <p className="text-base font-medium text-[#2e2218]">
+                첫 책을 만들고 삶의 이야기를 적어주세요.
+              </p>
+              <p className="mt-2 leading-7">
+                책을 만든 뒤 페이지를 추가하면 날짜, 사진, 본문이 책장과
+                연표에 같이 보입니다.
+              </p>
+              <button
+                type="button"
+                onClick={() => {
+                  createBook.mutate({
+                    memorialId,
+                    title: "삶의 이야기",
+                    subtitle: "사진과 글로 남기는 가족의 기록",
+                  });
+                }}
+                className="mt-6 inline-flex h-11 items-center justify-center gap-2 bg-[#1f1d1a] px-5 text-sm font-medium text-white"
+              >
+                <Plus className="h-4 w-4" />
+                바로 책 만들기
+              </button>
             </div>
           )
         )}
@@ -575,7 +596,7 @@ function BookView({
             className="inline-flex h-9 items-center gap-2 border border-[#e6ded1] bg-white px-3 text-xs text-[#4f4638]"
           >
             <Pencil className="h-3.5 w-3.5" />
-            페이지 편집
+            글/사진 페이지 편집
           </button>
           <button
             type="button"
@@ -746,7 +767,7 @@ function PageEditModal({
               <input
                 value={dateYear}
                 onChange={event => setDateYear(event.target.value)}
-                placeholder="연도"
+                placeholder="연도 예: 1984"
                 type="number"
                 className="h-10 border border-[#e6ded1] bg-white px-3 text-sm outline-none"
               />
@@ -776,6 +797,7 @@ function PageEditModal({
             <input
               value={title}
               onChange={event => setTitle(event.target.value)}
+              placeholder="예: 포항에서 시작한 새로운 생활"
               className="h-10 w-full border border-[#e6ded1] bg-white px-3 text-sm outline-none"
             />
           </label>
@@ -839,6 +861,7 @@ function PageEditModal({
             <textarea
               value={content}
               onChange={event => setContent(event.target.value)}
+              placeholder={"그날의 기억을 편하게 적어주세요.\n예: 새집으로 이사한 날, 가족들이 함께 찍은 사진입니다."}
               rows={6}
               className="w-full resize-y border border-[#e6ded1] bg-white px-3 py-2 text-sm leading-7 outline-none"
             />

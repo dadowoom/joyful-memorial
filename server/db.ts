@@ -374,6 +374,7 @@ export async function listAdminMemorials() {
   return db
     .select({
       id: memorials.id,
+      ownerUserId: memorials.ownerUserId,
       slug: memorials.slug,
       name: memorials.name,
       role: memorials.role,
@@ -483,6 +484,7 @@ export async function getPublicMemorialBySlug(slug: string) {
   const result = await db
     .select({
       id: memorials.id,
+      ownerUserId: memorials.ownerUserId,
       slug: memorials.slug,
       name: memorials.name,
       role: memorials.role,
@@ -1087,6 +1089,21 @@ export async function listMemorialGalleryPhotos(memorialId: number) {
     );
 }
 
+export async function getMemorialGalleryPhotoById(id: number) {
+  const db = await getDb();
+  if (!db) {
+    throw new Error("Database is not available");
+  }
+
+  const result = await db
+    .select()
+    .from(memorialGalleryPhotos)
+    .where(eq(memorialGalleryPhotos.id, id))
+    .limit(1);
+
+  return result[0] ?? null;
+}
+
 export async function createMemorialGalleryPhoto(
   data: InsertMemorialGalleryPhoto
 ) {
@@ -1160,6 +1177,21 @@ export async function createMemorialVideo(data: InsertMemorialVideo) {
   await db.insert(memorialVideos).values(data);
 }
 
+export async function getMemorialVideoById(id: number) {
+  const db = await getDb();
+  if (!db) {
+    throw new Error("Database is not available");
+  }
+
+  const result = await db
+    .select()
+    .from(memorialVideos)
+    .where(eq(memorialVideos.id, id))
+    .limit(1);
+
+  return result[0] ?? null;
+}
+
 export async function updateMemorialVideo(
   id: number,
   data: Partial<InsertMemorialVideo>
@@ -1206,6 +1238,21 @@ export async function getMemorialBookById(id: number) {
     .where(eq(memorialBooks.id, id))
     .limit(1);
   return result[0];
+}
+
+export async function getMemorialBookPageById(id: number) {
+  const db = await getDb();
+  if (!db) {
+    throw new Error("Database is not available");
+  }
+
+  const result = await db
+    .select()
+    .from(memorialBookPages)
+    .where(eq(memorialBookPages.id, id))
+    .limit(1);
+
+  return result[0] ?? null;
 }
 
 export async function createMemorialBook(data: InsertMemorialBook) {

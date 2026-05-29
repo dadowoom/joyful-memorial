@@ -759,7 +759,7 @@ export default function MemorialCreate() {
                         <img
                           src={portraitPhoto.dataUrl}
                           alt="대표 사진 미리보기"
-                          className="h-full w-full object-cover saturate-[0.78] contrast-[0.98]"
+                          className="h-full w-full object-cover saturate-[1.05] contrast-[1.01] brightness-[1.02]"
                         />
                       ) : (
                         <>
@@ -803,7 +803,7 @@ export default function MemorialCreate() {
                             key={`${photo.fileName}-${index}`}
                             src={photo.dataUrl}
                             alt={`활동 사진 ${index + 1}`}
-                            className="aspect-square w-full bg-white object-cover saturate-[0.78] contrast-[0.98]"
+                            className="aspect-square w-full bg-white object-cover saturate-[1.05] contrast-[1.01] brightness-[1.02]"
                           />
                         ))}
                       </div>

@@ -31,7 +31,7 @@ type MemorialGallerySectionProps = {
   isAdmin: boolean;
 };
 
-const memorialPhotoFilter = "grayscale(1) contrast(1.04) brightness(1.02)";
+const memorialPhotoFilter = "saturate(1.08) contrast(1.01) brightness(1.02)";
 
 export default function MemorialGallerySection({
   memorialId,

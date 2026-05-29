@@ -1,6 +1,6 @@
 import { z } from "zod";
 import { nanoid } from "nanoid";
-import { adminProcedure, router } from "../_core/trpc";
+import { protectedProcedure, router } from "../_core/trpc";
 import { decodeImageDataUrl } from "../_core/imageUpload";
 import { storagePut } from "../storage";
 
@@ -12,7 +12,7 @@ const uploadFolderSchema = z.enum([
 ]);
 
 export const uploadRouter = router({
-  image: adminProcedure
+  image: protectedProcedure
     .input(
       z.object({
         dataUrl: z.string(),

@@ -40,6 +40,7 @@ type ArchiveMemorial = {
   verse: string | null;
   verseRef: string | null;
   visibility: string;
+  canManage?: boolean;
 };
 
 type ArchivePhoto = {
@@ -82,6 +83,7 @@ export default function MemorialArchivePage() {
   }, [slug]);
 
   const memorial = memorialQuery.data as ArchiveMemorial | undefined;
+  const canManage = Boolean(memorial?.canManage);
   const isMemorialHall =
     memorial?.recordType === "memorial" ||
     Boolean(memorial?.deathDate?.trim());
@@ -98,20 +100,29 @@ export default function MemorialArchivePage() {
   const updateMemorial = trpc.memorial.update.useMutation({
     onSuccess: () => utils.memorial.bySlug.invalidate({ slug }),
   });
+  const updateMine = trpc.memorial.updateMine.useMutation({
+    onSuccess: () => utils.memorial.bySlug.invalidate({ slug }),
+  });
 
   const saveField = (
     field: keyof Pick<ArchiveMemorial, "name" | "role" | "summary" | "story">
   ) => {
     return (value: string) => {
       if (!memorial) return;
-      return updateMemorial.mutateAsync({ id: memorial.id, [field]: value });
+      const payload = { id: memorial.id, [field]: value };
+      return isAdmin
+        ? updateMemorial.mutateAsync(payload)
+        : updateMine.mutateAsync(payload);
     };
   };
 
   const saveSize = (field: "summaryDisplaySize" | "storyDisplaySize") => {
     return (value: "auto" | "small" | "normal" | "large") => {
       if (!memorial) return;
-      return updateMemorial.mutateAsync({ id: memorial.id, [field]: value });
+      const payload = { id: memorial.id, [field]: value };
+      return isAdmin
+        ? updateMemorial.mutateAsync(payload)
+        : updateMine.mutateAsync(payload);
     };
   };
 
@@ -172,7 +183,7 @@ export default function MemorialArchivePage() {
                     >
                       <InlineEditText
                         value={memorial.name}
-                        isAdmin={isAdmin}
+                        isAdmin={canManage}
                         onSave={saveField("name")}
                       />
                     </h1>
@@ -182,7 +193,7 @@ export default function MemorialArchivePage() {
                     >
                       <InlineEditText
                         value={memorial.role}
-                        isAdmin={isAdmin}
+                        isAdmin={canManage}
                         onSave={saveField("role")}
                       />
                     </p>
@@ -210,7 +221,7 @@ export default function MemorialArchivePage() {
                     >
                       <InlineEditText
                         value={memorial.summary}
-                        isAdmin={isAdmin}
+                        isAdmin={canManage}
                         onSave={saveField("summary")}
                         textSize={normalizeTextDisplaySize(
                           memorial.summaryDisplaySize
@@ -396,7 +407,7 @@ export default function MemorialArchivePage() {
                     >
                       <InlineEditText
                         value={memorial.story}
-                        isAdmin={isAdmin}
+                        isAdmin={canManage}
                         onSave={saveField("story")}
                         textSize={normalizeTextDisplaySize(
                           memorial.storyDisplaySize
@@ -414,7 +425,7 @@ export default function MemorialArchivePage() {
             <div id="gallery">
               <MemorialGallerySection
                 memorialId={memorial.id}
-                isAdmin={isAdmin}
+                isAdmin={canManage}
               />
             </div>
             <div id="video">
@@ -423,11 +434,11 @@ export default function MemorialArchivePage() {
                 memorialName={memorial.name}
                 churchName={memorial.church}
                 coverImageUrl={heroPhoto}
-                isAdmin={isAdmin}
+                isAdmin={canManage}
               />
             </div>
             <div id="book">
-              <MemorialBookSection memorialId={memorial.id} isAdmin={isAdmin} />
+              <MemorialBookSection memorialId={memorial.id} isAdmin={canManage} />
             </div>
             <MemorialLettersSection
               memorialSlug={memorial.slug}
