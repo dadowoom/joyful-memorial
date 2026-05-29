@@ -6,7 +6,6 @@ const serviceLinks = [
   { label: "추모 기록", href: "/memorial/search", type: "route" },
   { label: "인생기념관 만들기", href: "/memorial/create", type: "route" },
   { label: "가족의 마음글", href: "/letters", type: "route" },
-  { label: "키오스크", href: "/kiosk", type: "route" },
 ];
 
 export default function Footer() {

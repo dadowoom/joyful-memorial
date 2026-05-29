@@ -47,5 +47,3 @@ pnpm build
 - `/memorial/:slug/archive` 기념관 자세히 보기
 - `/memorial/:slug/family` 가족관
 - `/letters` 가족의 마음글
-- `/kiosk` 키오스크 검색
-- `/kiosk/memorial/:slug` 키오스크 전용 상세
