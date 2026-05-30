@@ -33,6 +33,13 @@ type TimelineItem = {
   photo?: SelectedPhoto | null;
 };
 
+type BookDraft = {
+  id: string;
+  title: string;
+  subtitle: string;
+  pages: TimelineItem[];
+};
+
 type Visibility = "public" | "private";
 
 type MemorialForm = {
@@ -140,7 +147,7 @@ const makeId = () => {
     }
   }
 
-  return `timeline-${Date.now()}-${Math.random().toString(36).slice(2)}`;
+  return `draft-${Date.now()}-${Math.random().toString(36).slice(2)}`;
 };
 
 const makeTimelineItem = (): TimelineItem => ({
@@ -149,6 +156,13 @@ const makeTimelineItem = (): TimelineItem => ({
   title: "",
   description: "",
   photo: null,
+});
+
+const makeBookDraft = (index = 1): BookDraft => ({
+  id: makeId(),
+  title: index === 1 ? "우리 가족의 첫 번째 책" : `새 책 ${index}`,
+  subtitle: "",
+  pages: [makeTimelineItem(), makeTimelineItem()],
 });
 
 const sanitizeSlug = (value: string) =>
@@ -171,11 +185,9 @@ export default function MemorialCreate() {
     redirectOnUnauthenticated: true,
   });
   const [form, setForm] = useState<MemorialForm>(initialForm);
-  const [timeline, setTimeline] = useState<TimelineItem[]>([
-    makeTimelineItem(),
-    makeTimelineItem(),
-  ]);
-  const [activeTimelineIndex, setActiveTimelineIndex] = useState(0);
+  const [books, setBooks] = useState<BookDraft[]>(() => [makeBookDraft(1)]);
+  const [activeBookIndex, setActiveBookIndex] = useState(0);
+  const [activePageIndex, setActivePageIndex] = useState(0);
   const [portraitPhoto, setPortraitPhoto] = useState<SelectedPhoto | null>(
     null
   );
@@ -196,6 +208,7 @@ export default function MemorialCreate() {
 
       const parsed = JSON.parse(saved) as {
         form?: Partial<MemorialForm>;
+        books?: BookDraft[];
         timeline?: TimelineItem[];
       };
 
@@ -207,16 +220,39 @@ export default function MemorialCreate() {
         setForm({ ...initialForm, ...savedForm });
       }
 
-      if (Array.isArray(parsed.timeline) && parsed.timeline.length > 0) {
-        setTimeline(
-          parsed.timeline.map(item => ({
-            id: item.id || makeId(),
-            year: item.year || "",
-            title: item.title || "",
-            description: item.description || "",
-            photo: null,
+      if (Array.isArray(parsed.books) && parsed.books.length > 0) {
+        setBooks(
+          parsed.books.map((book, index) => ({
+            id: book.id || makeId(),
+            title:
+              book.title ||
+              (index === 0 ? "우리 가족의 첫 번째 책" : `새 책 ${index + 1}`),
+            subtitle: book.subtitle || "",
+            pages:
+              Array.isArray(book.pages) && book.pages.length > 0
+                ? book.pages.map(item => ({
+                    id: item.id || makeId(),
+                    year: item.year || "",
+                    title: item.title || "",
+                    description: item.description || "",
+                    photo: null,
+                  }))
+                : [makeTimelineItem()],
           }))
         );
+      } else if (Array.isArray(parsed.timeline) && parsed.timeline.length > 0) {
+        setBooks([
+          {
+            ...makeBookDraft(1),
+            pages: parsed.timeline.map(item => ({
+              id: item.id || makeId(),
+              year: item.year || "",
+              title: item.title || "",
+              description: item.description || "",
+              photo: null,
+            })),
+          },
+        ]);
       }
     } catch {
       localStorage.removeItem(draftKey);
@@ -244,17 +280,33 @@ export default function MemorialCreate() {
         .map(({ label }) => label),
     [form]
   );
-  const activeTimelinePosition = Math.min(
-    activeTimelineIndex,
-    Math.max(timeline.length - 1, 0)
+  const activeBookPosition = Math.min(
+    activeBookIndex,
+    Math.max(books.length - 1, 0)
   );
-  const activeTimeline = timeline[activeTimelinePosition] ?? timeline[0];
+  const activeBook = books[activeBookPosition] ?? books[0];
+  const activeBookPages = activeBook?.pages ?? [];
+  const activePagePosition = Math.min(
+    activePageIndex,
+    Math.max(activeBookPages.length - 1, 0)
+  );
+  const activePage = activeBookPages[activePagePosition] ?? activeBookPages[0];
+  const allBookPages = useMemo(
+    () => books.flatMap(book => book.pages),
+    [books]
+  );
 
   useEffect(() => {
-    setActiveTimelineIndex(current =>
-      Math.min(current, Math.max(timeline.length - 1, 0))
+    setActiveBookIndex(current =>
+      Math.min(current, Math.max(books.length - 1, 0))
     );
-  }, [timeline.length]);
+  }, [books.length]);
+
+  useEffect(() => {
+    setActivePageIndex(current =>
+      Math.min(current, Math.max(activeBookPages.length - 1, 0))
+    );
+  }, [activeBookPosition, activeBookPages.length]);
 
   const updateField = (key: keyof MemorialForm, value: string) => {
     const nextValue = key === "slug" ? sanitizeSlug(value) : value;
@@ -279,18 +331,43 @@ export default function MemorialCreate() {
     setCreatedMemorial(null);
   };
 
-  const updateTimeline = (
+  const updateBook = (
     id: string,
+    field: "title" | "subtitle",
+    value: string
+  ) => {
+    setBooks(items =>
+      items.map(book => (book.id === id ? { ...book, [field]: value } : book))
+    );
+    setSubmitted(false);
+    setCreatedMemorial(null);
+  };
+
+  const updateBookPage = (
+    bookId: string,
+    pageId: string,
     field: "year" | "title" | "description",
     value: string
   ) => {
-    setTimeline(items =>
-      items.map(item => (item.id === id ? { ...item, [field]: value } : item))
+    setBooks(items =>
+      items.map(book =>
+        book.id === bookId
+          ? {
+              ...book,
+              pages: book.pages.map(page =>
+                page.id === pageId ? { ...page, [field]: value } : page
+              ),
+            }
+          : book
+      )
     );
+    setSubmitted(false);
+    setCreatedMemorial(null);
   };
 
-  const updateTimelinePhoto = async (
-    id: string,
+  const updateBookPagePhoto = async (
+    bookId: string,
+    pageId: string,
     event: ChangeEvent<HTMLInputElement>
   ) => {
     const file = event.target.files?.[0];
@@ -298,32 +375,100 @@ export default function MemorialCreate() {
     if (!file) return;
 
     const photo = await compressImageFile(file, { maxBytes: 2_500_000 });
-    setTimeline(items =>
-      items.map(item => (item.id === id ? { ...item, photo } : item))
+    setBooks(items =>
+      items.map(book =>
+        book.id === bookId
+          ? {
+              ...book,
+              pages: book.pages.map(page =>
+                page.id === pageId ? { ...page, photo } : page
+              ),
+            }
+          : book
+      )
     );
     setSubmitted(false);
     setCreatedMemorial(null);
   };
 
-  const addTimeline = () => {
-    const nextItem = makeTimelineItem();
-    setTimeline(items => [...items, nextItem]);
-    setActiveTimelineIndex(timeline.length);
+  const clearBookPagePhoto = (bookId: string, pageId: string) => {
+    setBooks(items =>
+      items.map(book =>
+        book.id === bookId
+          ? {
+              ...book,
+              pages: book.pages.map(page =>
+                page.id === pageId ? { ...page, photo: null } : page
+              ),
+            }
+          : book
+      )
+    );
+    setSubmitted(false);
+    setCreatedMemorial(null);
   };
 
-  const removeTimeline = (id: string) => {
-    const itemExists = timeline.some(item => item.id === id);
-    const nextLength = itemExists
-      ? Math.max(timeline.length - 1, 1)
-      : timeline.length;
+  const addBook = () => {
+    const nextBook = makeBookDraft(books.length + 1);
+    setBooks(items => [...items, nextBook]);
+    setActiveBookIndex(books.length);
+    setActivePageIndex(0);
+    setSubmitted(false);
+    setCreatedMemorial(null);
+  };
 
-    setTimeline(items => {
-      const nextItems = items.filter(item => item.id !== id);
-      return nextItems.length ? nextItems : [makeTimelineItem()];
-    });
-    setActiveTimelineIndex(current =>
+  const removeBook = (id: string) => {
+    if (books.length <= 1) return;
+
+    const nextLength = Math.max(books.length - 1, 1);
+    setBooks(items => items.filter(book => book.id !== id));
+    setActiveBookIndex(current => Math.min(current, nextLength - 1));
+    setActivePageIndex(0);
+    setSubmitted(false);
+    setCreatedMemorial(null);
+  };
+
+  const addBookPage = () => {
+    if (!activeBook) return;
+
+    const nextItem = makeTimelineItem();
+    setBooks(items =>
+      items.map(book =>
+        book.id === activeBook.id
+          ? { ...book, pages: [...book.pages, nextItem] }
+          : book
+      )
+    );
+    setActivePageIndex(activeBookPages.length);
+    setSubmitted(false);
+    setCreatedMemorial(null);
+  };
+
+  const removeBookPage = (bookId: string, pageId: string) => {
+    const targetBook = books.find(book => book.id === bookId);
+    const itemExists = Boolean(
+      targetBook?.pages.some(page => page.id === pageId)
+    );
+    const nextLength = itemExists
+      ? Math.max((targetBook?.pages.length ?? 1) - 1, 1)
+      : (targetBook?.pages.length ?? 1);
+
+    setBooks(items =>
+      items.map(book => {
+        if (book.id !== bookId) return book;
+
+        const nextPages = book.pages.filter(page => page.id !== pageId);
+        return {
+          ...book,
+          pages: nextPages.length ? nextPages : [makeTimelineItem()],
+        };
+      })
+    );
+    setActivePageIndex(current =>
       Math.min(current, Math.max(nextLength - 1, 0))
     );
+    setSubmitted(false);
+    setCreatedMemorial(null);
   };
 
   const handlePortraitChange = async (event: ChangeEvent<HTMLInputElement>) => {
@@ -356,7 +501,11 @@ export default function MemorialCreate() {
       draftKey,
       JSON.stringify({
         form,
-        timeline: timeline.map(({ photo: _photo, ...item }) => item),
+        books: books.map(book => ({
+          ...book,
+          pages: book.pages.map(({ photo: _photo, ...item }) => item),
+        })),
+        timeline: allBookPages.map(({ photo: _photo, ...item }) => item),
       })
     );
     setNotice(
@@ -405,31 +554,35 @@ export default function MemorialCreate() {
       const created = await createMemorialMutation.mutateAsync({
         ...form,
         slug: slugPreview,
-        timeline: timeline.map(({ year, title, description }) => ({
+        timeline: allBookPages.map(({ year, title, description }) => ({
           year,
           title,
           description,
         })),
-        bookPages: timeline
-          .filter(
-            ({ year, title, description, photo }) =>
-              year.trim() ||
-              title.trim() ||
-              description.trim() ||
-              Boolean(photo)
-          )
-          .map(({ year, title, description, photo }) => ({
-            year,
-            title,
-            content: description,
-            dateYear: toBookPageYear(year),
-            photo: photo
-              ? {
-                  dataUrl: photo.dataUrl,
-                  fileName: photo.fileName,
-                }
-              : undefined,
-          })),
+        books: books.map((book, index) => ({
+          title: book.title.trim() || `책 ${index + 1}`,
+          subtitle: book.subtitle,
+          pages: book.pages
+            .filter(
+              ({ year, title, description, photo }) =>
+                year.trim() ||
+                title.trim() ||
+                description.trim() ||
+                Boolean(photo)
+            )
+            .map(({ year, title, description, photo }) => ({
+              year,
+              title,
+              content: description,
+              dateYear: toBookPageYear(year),
+              photo: photo
+                ? {
+                    dataUrl: photo.dataUrl,
+                    fileName: photo.fileName,
+                  }
+                : undefined,
+            })),
+        })),
         photos: [
           ...(portraitPhoto
             ? [
@@ -597,7 +750,7 @@ export default function MemorialCreate() {
                     href="#timeline"
                     className="block transition-colors hover:text-[#121212]"
                   >
-                    책장 페이지
+                    책과 페이지
                   </a>
                   <a
                     href="#photos"
@@ -780,9 +933,9 @@ export default function MemorialCreate() {
                 id="timeline"
                 className="scroll-mt-24 border border-[#dbdad7] p-5 md:p-8"
               >
-                <SectionHeader number="03" title="책장 페이지" />
+                <SectionHeader number="03" title="책과 페이지" />
                 <p className="mb-6 text-sm leading-7 text-[#616161]">
-                  빈 책에 사진과 글을 한 장씩 채운다고 생각하고 작성해 주세요.
+                  책을 먼저 만들고, 그 안에 사진과 글을 한 장씩 채워 주세요.
                   저장하면 책장 보기와 연표 보기에 함께 정리됩니다.
                 </p>
 
@@ -790,171 +943,273 @@ export default function MemorialCreate() {
                   <div className="flex flex-col gap-4 border-b border-[#dbdad7] pb-4 lg:flex-row lg:items-center lg:justify-between">
                     <div>
                       <p className="text-sm font-medium text-[#121212]">
-                        책장 페이지 {activeTimelinePosition + 1}
+                        책 목록
                       </p>
                       <p className="mt-1 text-xs text-[#616161]">
-                        {activeTimelinePosition + 1} / {timeline.length}
+                        {books.length}권 · 총 {allBookPages.length}페이지
                       </p>
                     </div>
 
-                    <div className="flex flex-wrap items-center gap-2">
-                      <button
-                        type="button"
-                        onClick={() =>
-                          setActiveTimelineIndex(index =>
-                            Math.max(index - 1, 0)
-                          )
-                        }
-                        disabled={activeTimelinePosition === 0}
-                        className="inline-flex h-9 items-center gap-1 border border-[#dbdad7] bg-white px-3 text-xs text-[#616161] transition-colors hover:text-[#121212] disabled:opacity-40"
-                      >
-                        <ChevronLeft className="h-3.5 w-3.5" />
-                        이전
-                      </button>
-                      <div className="flex max-w-full gap-1 overflow-x-auto">
-                        {timeline.map((item, index) => (
-                          <button
-                            key={item.id}
-                            type="button"
-                            onClick={() => setActiveTimelineIndex(index)}
-                            className={`h-9 min-w-9 border px-3 text-xs ${
-                              index === activeTimelinePosition
-                                ? "border-[#18181b] bg-[#18181b] text-white"
-                                : "border-[#dbdad7] bg-white text-[#616161]"
-                            }`}
-                            aria-label={`책장 페이지 ${index + 1} 편집`}
-                          >
-                            {index + 1}
-                          </button>
-                        ))}
-                      </div>
-                      <button
-                        type="button"
-                        onClick={() =>
-                          setActiveTimelineIndex(index =>
-                            Math.min(index + 1, timeline.length - 1)
-                          )
-                        }
-                        disabled={activeTimelinePosition >= timeline.length - 1}
-                        className="inline-flex h-9 items-center gap-1 border border-[#dbdad7] bg-white px-3 text-xs text-[#616161] transition-colors hover:text-[#121212] disabled:opacity-40"
-                      >
-                        다음
-                        <ChevronRight className="h-3.5 w-3.5" />
-                      </button>
-                      {timeline.length > 1 && activeTimeline && (
-                        <button
-                          type="button"
-                          onClick={() => removeTimeline(activeTimeline.id)}
-                          className="inline-flex h-9 items-center gap-2 px-1 text-sm text-[#616161] transition-colors hover:text-[#121212]"
-                        >
-                          <Trash2 className="h-4 w-4" strokeWidth={1.6} />
-                          삭제
-                        </button>
-                      )}
-                    </div>
+                    <button
+                      type="button"
+                      onClick={addBook}
+                      className="inline-flex h-10 items-center justify-center gap-2 border border-[#7b8a61] bg-[#7b8a61] px-4 text-sm text-white transition-colors hover:bg-[#66734f]"
+                    >
+                      <Plus className="h-4 w-4" strokeWidth={1.7} />책 만들기
+                    </button>
                   </div>
 
-                  {activeTimeline && (
-                    <div className="mt-5 grid gap-5 lg:grid-cols-[260px_minmax(0,1fr)]">
-                      <div>
-                        <label className={labelClass}>사진</label>
-                        <label className="flex aspect-[4/3] w-full flex-col items-center justify-center overflow-hidden border border-dashed border-[#dbdad7] bg-white text-center text-sm text-[#616161] transition-colors hover:border-[#18181b] hover:text-[#121212]">
-                          {activeTimeline.photo ? (
-                            <img
-                              src={activeTimeline.photo.dataUrl}
-                              alt={`책장 페이지 ${activeTimelinePosition + 1} 사진`}
-                              className="h-full w-full object-cover saturate-[1.05] contrast-[1.01] brightness-[1.02]"
+                  <div className="-mx-1 mt-4 flex gap-3 overflow-x-auto px-1 pb-2">
+                    {books.map((book, index) => (
+                      <button
+                        key={book.id}
+                        type="button"
+                        onClick={() => {
+                          setActiveBookIndex(index);
+                          setActivePageIndex(0);
+                        }}
+                        className={`min-h-28 border p-4 text-left transition-colors ${
+                          index === activeBookPosition
+                            ? "border-[#18181b] bg-white"
+                            : "border-[#dbdad7] bg-[#fbfaf7] hover:border-[#9d927f]"
+                        } w-[230px] flex-none`}
+                      >
+                        <span className="text-[11px] font-medium text-[#9b6b2f]">
+                          책 {index + 1}
+                        </span>
+                        <strong className="mt-2 block truncate text-base font-medium text-[#121212]">
+                          {book.title || `책 ${index + 1}`}
+                        </strong>
+                        <span className="mt-3 block text-xs text-[#616161]">
+                          {book.pages.length}페이지
+                        </span>
+                      </button>
+                    ))}
+                  </div>
+
+                  {activeBook && (
+                    <div className="mt-6 border-t border-[#dbdad7] pt-5">
+                      <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
+                        <div className="grid flex-1 gap-4 md:grid-cols-2">
+                          <label>
+                            <span className={labelClass}>책 제목</span>
+                            <input
+                              className={inputClass}
+                              value={activeBook.title}
+                              onChange={event =>
+                                updateBook(
+                                  activeBook.id,
+                                  "title",
+                                  event.target.value
+                                )
+                              }
+                              placeholder="예: 엄마의 봄날 이야기"
                             />
-                          ) : (
-                            <>
-                              <ImagePlus
-                                className="mb-2 h-5 w-5"
-                                strokeWidth={1.5}
-                              />
-                              사진 넣기
-                            </>
-                          )}
-                          <input
-                            type="file"
-                            accept="image/*"
-                            onChange={event =>
-                              updateTimelinePhoto(activeTimeline.id, event)
-                            }
-                            className="sr-only"
-                          />
-                        </label>
-                        {activeTimeline.photo && (
+                          </label>
+                          <label>
+                            <span className={labelClass}>책 설명</span>
+                            <input
+                              className={inputClass}
+                              value={activeBook.subtitle}
+                              onChange={event =>
+                                updateBook(
+                                  activeBook.id,
+                                  "subtitle",
+                                  event.target.value
+                                )
+                              }
+                              placeholder="예: 가족이 함께 기억하고 싶은 순간들"
+                            />
+                          </label>
+                        </div>
+
+                        {books.length > 1 && (
                           <button
                             type="button"
-                            onClick={() =>
-                              setTimeline(items =>
-                                items.map(current =>
-                                  current.id === activeTimeline.id
-                                    ? { ...current, photo: null }
-                                    : current
-                                )
-                              )
-                            }
-                            className="mt-2 text-xs text-[#616161] underline-offset-4 hover:text-[#121212] hover:underline"
+                            onClick={() => removeBook(activeBook.id)}
+                            className="inline-flex h-10 items-center gap-2 self-start px-1 text-sm text-[#616161] transition-colors hover:text-[#121212]"
                           >
-                            사진 빼기
+                            <Trash2 className="h-4 w-4" strokeWidth={1.6} />책
+                            삭제
                           </button>
                         )}
                       </div>
 
-                      <div className="space-y-4">
-                        <div className="grid gap-4 md:grid-cols-[120px_minmax(0,1fr)]">
-                          <input
-                            className={inputClass}
-                            value={activeTimeline.year}
-                            onChange={event =>
-                              updateTimeline(
-                                activeTimeline.id,
-                                "year",
-                                event.target.value
-                              )
-                            }
-                            placeholder="연도"
-                          />
-                          <input
-                            className={inputClass}
-                            value={activeTimeline.title}
-                            onChange={event =>
-                              updateTimeline(
-                                activeTimeline.id,
-                                "title",
-                                event.target.value
-                              )
-                            }
-                            placeholder="페이지 제목"
-                          />
+                      <div className="mt-6 flex flex-col gap-3 border-y border-[#dbdad7] py-4 md:flex-row md:items-center md:justify-between">
+                        <div>
+                          <p className="text-sm font-medium text-[#121212]">
+                            현재 페이지
+                          </p>
+                          <p className="mt-1 text-xs text-[#616161]">
+                            {activePagePosition + 1} / {activeBookPages.length}
+                          </p>
                         </div>
 
-                        <textarea
-                          className="min-h-32 w-full resize-y border border-[#dbdad7] bg-white p-4 text-sm leading-7 text-[#121212] outline-none transition-colors placeholder:text-[#9a9a9a] focus:border-[#18181b]"
-                          value={activeTimeline.description}
-                          onChange={event =>
-                            updateTimeline(
-                              activeTimeline.id,
-                              "description",
-                              event.target.value
-                            )
-                          }
-                          placeholder="사진에 담긴 일, 그때의 마음, 가족이 기억하고 싶은 내용을 적어 주세요."
-                        />
+                        <div className="flex w-full flex-wrap items-center gap-2 md:w-auto">
+                          <button
+                            type="button"
+                            onClick={() =>
+                              setActivePageIndex(index =>
+                                Math.max(index - 1, 0)
+                              )
+                            }
+                            disabled={activePagePosition === 0}
+                            className="inline-flex h-10 items-center gap-1 border border-[#dbdad7] bg-white px-3 text-sm text-[#616161] transition-colors hover:text-[#121212] disabled:opacity-40"
+                          >
+                            <ChevronLeft className="h-4 w-4" />
+                            이전
+                          </button>
+                          <select
+                            value={activePagePosition}
+                            onChange={event =>
+                              setActivePageIndex(Number(event.target.value))
+                            }
+                            className="h-10 min-w-[150px] max-w-full flex-1 border border-[#dbdad7] bg-white px-3 text-sm text-[#121212] outline-none focus:border-[#18181b] sm:flex-none"
+                            aria-label="편집할 페이지 선택"
+                          >
+                            {activeBookPages.map((page, index) => (
+                              <option key={page.id} value={index}>
+                                페이지 {index + 1}
+                                {page.title ? ` · ${page.title}` : ""}
+                              </option>
+                            ))}
+                          </select>
+                          <button
+                            type="button"
+                            onClick={() =>
+                              setActivePageIndex(index =>
+                                Math.min(index + 1, activeBookPages.length - 1)
+                              )
+                            }
+                            disabled={
+                              activePagePosition >= activeBookPages.length - 1
+                            }
+                            className="inline-flex h-10 items-center gap-1 border border-[#dbdad7] bg-white px-3 text-sm text-[#616161] transition-colors hover:text-[#121212] disabled:opacity-40"
+                          >
+                            다음
+                            <ChevronRight className="h-4 w-4" />
+                          </button>
+                          <button
+                            type="button"
+                            onClick={addBookPage}
+                            className="inline-flex h-10 items-center gap-2 border border-[#dbdad7] bg-white px-3 text-sm text-[#121212] transition-colors hover:bg-[#f6f5f2]"
+                          >
+                            <Plus className="h-4 w-4" strokeWidth={1.6} />
+                            페이지 추가
+                          </button>
+                          {activeBookPages.length > 1 && activePage && (
+                            <button
+                              type="button"
+                              onClick={() =>
+                                removeBookPage(activeBook.id, activePage.id)
+                              }
+                              className="inline-flex h-10 items-center gap-2 px-1 text-sm text-[#616161] transition-colors hover:text-[#121212]"
+                            >
+                              <Trash2 className="h-4 w-4" strokeWidth={1.6} />
+                              페이지 삭제
+                            </button>
+                          )}
+                        </div>
                       </div>
+
+                      {activePage && (
+                        <div className="mt-5 grid overflow-hidden border border-[#dbdad7] bg-white lg:grid-cols-[minmax(220px,0.82fr)_minmax(0,1fr)]">
+                          <div className="border-b border-[#dbdad7] bg-[#fffdf7] p-5 lg:border-b-0 lg:border-r">
+                            <label className={labelClass}>사진</label>
+                            <label className="flex aspect-[4/3] w-full flex-col items-center justify-center overflow-hidden border border-dashed border-[#dbdad7] bg-white text-center text-sm text-[#616161] transition-colors hover:border-[#18181b] hover:text-[#121212]">
+                              {activePage.photo ? (
+                                <img
+                                  src={activePage.photo.dataUrl}
+                                  alt={`페이지 ${activePagePosition + 1} 사진`}
+                                  className="h-full w-full object-cover saturate-[1.05] contrast-[1.01] brightness-[1.02]"
+                                />
+                              ) : (
+                                <>
+                                  <ImagePlus
+                                    className="mb-2 h-5 w-5"
+                                    strokeWidth={1.5}
+                                  />
+                                  사진 넣기
+                                </>
+                              )}
+                              <input
+                                type="file"
+                                accept="image/*"
+                                onChange={event =>
+                                  updateBookPagePhoto(
+                                    activeBook.id,
+                                    activePage.id,
+                                    event
+                                  )
+                                }
+                                className="sr-only"
+                              />
+                            </label>
+                            {activePage.photo && (
+                              <button
+                                type="button"
+                                onClick={() =>
+                                  clearBookPagePhoto(
+                                    activeBook.id,
+                                    activePage.id
+                                  )
+                                }
+                                className="mt-2 text-xs text-[#616161] underline-offset-4 hover:text-[#121212] hover:underline"
+                              >
+                                사진 빼기
+                              </button>
+                            )}
+                          </div>
+
+                          <div className="space-y-4 p-5">
+                            <div className="grid gap-4 md:grid-cols-[120px_minmax(0,1fr)]">
+                              <input
+                                className={inputClass}
+                                value={activePage.year}
+                                onChange={event =>
+                                  updateBookPage(
+                                    activeBook.id,
+                                    activePage.id,
+                                    "year",
+                                    event.target.value
+                                  )
+                                }
+                                placeholder="연도"
+                              />
+                              <input
+                                className={inputClass}
+                                value={activePage.title}
+                                onChange={event =>
+                                  updateBookPage(
+                                    activeBook.id,
+                                    activePage.id,
+                                    "title",
+                                    event.target.value
+                                  )
+                                }
+                                placeholder="페이지 제목"
+                              />
+                            </div>
+
+                            <textarea
+                              className="min-h-40 w-full resize-y border border-[#dbdad7] bg-white p-4 text-sm leading-7 text-[#121212] outline-none transition-colors placeholder:text-[#9a9a9a] focus:border-[#18181b]"
+                              value={activePage.description}
+                              onChange={event =>
+                                updateBookPage(
+                                  activeBook.id,
+                                  activePage.id,
+                                  "description",
+                                  event.target.value
+                                )
+                              }
+                              placeholder="사진에 담긴 일, 그때의 마음, 가족이 기억하고 싶은 내용을 적어 주세요."
+                            />
+                          </div>
+                        </div>
+                      )}
                     </div>
                   )}
                 </div>
-
-                <button
-                  type="button"
-                  onClick={addTimeline}
-                  className="mt-6 inline-flex h-11 items-center gap-2 border border-[#dbdad7] px-4 text-sm transition-colors hover:bg-[#f6f5f2]"
-                >
-                  <Plus className="h-4 w-4" strokeWidth={1.6} />
-                  책장 페이지 추가
-                </button>
               </section>
 
               <section

@@ -52,6 +52,19 @@ import { uploadRouter } from "./routers/upload";
 import { videoRouter } from "./routers/video";
 import { storagePut } from "./storage";
 
+const bookPageCreateInput = z.object({
+  year: z.string().trim().max(20).optional(),
+  title: z.string().trim().max(300).optional(),
+  content: z.string().trim().max(20000).optional(),
+  dateYear: z.number().min(1800).max(2200).optional(),
+  photo: z
+    .object({
+      dataUrl: z.string().max(8_500_000),
+      fileName: z.string().trim().min(1).max(240),
+    })
+    .optional(),
+});
+
 const memorialCreateInput = z.object({
   name: z.string().trim().min(1).max(120),
   role: z.string().trim().min(1).max(80),
@@ -88,7 +101,7 @@ const memorialCreateInput = z.object({
         description: z.string().trim().max(1000),
       })
     )
-    .max(30)
+    .max(200)
     .default([]),
   photos: z
     .array(
@@ -102,19 +115,13 @@ const memorialCreateInput = z.object({
     )
     .max(7)
     .default([]),
-  bookPages: z
+  bookPages: z.array(bookPageCreateInput).max(80).default([]),
+  books: z
     .array(
       z.object({
-        year: z.string().trim().max(20).optional(),
         title: z.string().trim().max(300).optional(),
-        content: z.string().trim().max(20000).optional(),
-        dateYear: z.number().min(1800).max(2200).optional(),
-        photo: z
-          .object({
-            dataUrl: z.string().max(8_500_000),
-            fileName: z.string().trim().min(1).max(240),
-          })
-          .optional(),
+        subtitle: z.string().trim().max(300).optional(),
+        pages: z.array(bookPageCreateInput).max(80).default([]),
       })
     )
     .max(20)
@@ -687,17 +694,51 @@ export const appRouter = router({
           })
         );
 
-        const bookPages = input.bookPages.filter(
-          page =>
+        const hasBookPageContent = (page: (typeof input.bookPages)[number]) =>
+          Boolean(
             page.year?.trim() ||
-            page.title?.trim() ||
-            page.content?.trim() ||
-            page.photo
-        );
+              page.title?.trim() ||
+              page.content?.trim() ||
+              page.photo
+          );
 
-        if (bookPages.length > 0) {
+        const legacyBookPages = input.bookPages.filter(hasBookPageContent);
+        const inputBooks = input.books
+          .map((book, index) => ({
+            title: book.title?.trim() || `책 ${index + 1}`,
+            subtitle: book.subtitle?.trim() || null,
+            pages: book.pages.filter(
+              page =>
+                page.year?.trim() ||
+                page.title?.trim() ||
+                page.content?.trim() ||
+                page.photo
+            ),
+          }))
+          .filter(book => book.pages.length > 0);
+
+        const booksToCreate =
+          inputBooks.length > 0
+            ? inputBooks
+            : legacyBookPages.length > 0
+              ? [
+                  {
+                    title: `${created.name}의 인생 이야기`,
+                    subtitle: "사진과 글로 남기는 가족의 기록",
+                    pages: legacyBookPages,
+                  },
+                ]
+              : [];
+
+        for (
+          let bookIndex = 0;
+          bookIndex < booksToCreate.length;
+          bookIndex += 1
+        ) {
+          const bookInput = booksToCreate[bookIndex];
+
           const uploadedPagePhotos = await Promise.all(
-            bookPages.map(async page => {
+            bookInput.pages.map(async page => {
               if (!page.photo) return { url: null, key: null };
 
               const { buffer, mimeType, ext } = decodeImageDataUrl(
@@ -711,42 +752,44 @@ export const appRouter = router({
           const coverPhoto =
             uploadedPagePhotos.find(photo => photo.url && photo.key) ?? null;
 
-          const bookTitle = `${created.name}의 인생 이야기`;
           await createMemorialBook({
             memorialId: created.id,
-            title: bookTitle,
-            subtitle: "사진과 글로 남기는 가족의 기록",
+            title: bookInput.title,
+            subtitle: bookInput.subtitle,
             coverPhotoUrl: coverPhoto?.url ?? null,
             coverPhotoKey: coverPhoto?.key ?? null,
             publishedYear: new Date().getFullYear().toString(),
-            sortOrder: 0,
+            sortOrder: bookIndex,
           });
 
-          const [book] = await listMemorialBooks(created.id);
-          if (book) {
-            await Promise.all(
-              bookPages.map(async (page, index) => {
-                const pagePhoto = uploadedPagePhotos[index];
+          const createdBooks = await listMemorialBooks(created.id);
+          const book =
+            createdBooks.find(item => item.sortOrder === bookIndex) ??
+            createdBooks[createdBooks.length - 1];
 
-                const yearFromText =
-                  page.year?.trim().match(/^\d{4}$/)?.[0] ?? null;
+          if (!book) continue;
 
-                await createMemorialBookPage({
-                  bookId: book.id,
-                  title: page.title || "삶의 한 장",
-                  content: page.content || null,
-                  photoUrl: pagePhoto?.url ?? null,
-                  photoKey: pagePhoto?.key ?? null,
-                  dateYear:
-                    page.dateYear ??
-                    (yearFromText ? Number(yearFromText) : null),
-                  dateMonth: null,
-                  dateDay: null,
-                  sortOrder: index,
-                });
-              })
-            );
-          }
+          await Promise.all(
+            bookInput.pages.map(async (page, index) => {
+              const pagePhoto = uploadedPagePhotos[index];
+
+              const yearFromText =
+                page.year?.trim().match(/^\d{4}$/)?.[0] ?? null;
+
+              await createMemorialBookPage({
+                bookId: book.id,
+                title: page.title || "삶의 한 장",
+                content: page.content || null,
+                photoUrl: pagePhoto?.url ?? null,
+                photoKey: pagePhoto?.key ?? null,
+                dateYear:
+                  page.dateYear ?? (yearFromText ? Number(yearFromText) : null),
+                dateMonth: null,
+                dateDay: null,
+                sortOrder: index,
+              });
+            })
+          );
         }
 
         return {
