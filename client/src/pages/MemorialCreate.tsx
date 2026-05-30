@@ -9,6 +9,8 @@ import { trpc } from "@/lib/trpc";
 import {
   ArrowRight,
   Check,
+  ChevronLeft,
+  ChevronRight,
   ImagePlus,
   Plus,
   Save,
@@ -173,6 +175,7 @@ export default function MemorialCreate() {
     makeTimelineItem(),
     makeTimelineItem(),
   ]);
+  const [activeTimelineIndex, setActiveTimelineIndex] = useState(0);
   const [portraitPhoto, setPortraitPhoto] = useState<SelectedPhoto | null>(
     null
   );
@@ -241,6 +244,17 @@ export default function MemorialCreate() {
         .map(({ label }) => label),
     [form]
   );
+  const activeTimelinePosition = Math.min(
+    activeTimelineIndex,
+    Math.max(timeline.length - 1, 0)
+  );
+  const activeTimeline = timeline[activeTimelinePosition] ?? timeline[0];
+
+  useEffect(() => {
+    setActiveTimelineIndex(current =>
+      Math.min(current, Math.max(timeline.length - 1, 0))
+    );
+  }, [timeline.length]);
 
   const updateField = (key: keyof MemorialForm, value: string) => {
     const nextValue = key === "slug" ? sanitizeSlug(value) : value;
@@ -267,7 +281,7 @@ export default function MemorialCreate() {
 
   const updateTimeline = (
     id: string,
-    field: keyof Omit<TimelineItem, "id">,
+    field: "year" | "title" | "description",
     value: string
   ) => {
     setTimeline(items =>
@@ -292,11 +306,24 @@ export default function MemorialCreate() {
   };
 
   const addTimeline = () => {
-    setTimeline(items => [...items, makeTimelineItem()]);
+    const nextItem = makeTimelineItem();
+    setTimeline(items => [...items, nextItem]);
+    setActiveTimelineIndex(timeline.length);
   };
 
   const removeTimeline = (id: string) => {
-    setTimeline(items => items.filter(item => item.id !== id));
+    const itemExists = timeline.some(item => item.id === id);
+    const nextLength = itemExists
+      ? Math.max(timeline.length - 1, 1)
+      : timeline.length;
+
+    setTimeline(items => {
+      const nextItems = items.filter(item => item.id !== id);
+      return nextItems.length ? nextItems : [makeTimelineItem()];
+    });
+    setActiveTimelineIndex(current =>
+      Math.min(current, Math.max(nextLength - 1, 0))
+    );
   };
 
   const handlePortraitChange = async (event: ChangeEvent<HTMLInputElement>) => {
@@ -759,119 +786,165 @@ export default function MemorialCreate() {
                   저장하면 책장 보기와 연표 보기에 함께 정리됩니다.
                 </p>
 
-                <div className="space-y-6">
-                  {timeline.map((item, index) => (
-                    <div
-                      key={item.id}
-                      className="border border-[#dbdad7] bg-[#fffefa] p-4 md:p-5"
-                    >
-                      <div className="flex items-center justify-between gap-4">
-                        <p className="text-sm font-medium text-[#121212]">
-                          책장 페이지 {index + 1}
-                        </p>
-                        {timeline.length > 1 && (
+                <div className="border border-[#dbdad7] bg-[#fffefa] p-4 md:p-5">
+                  <div className="flex flex-col gap-4 border-b border-[#dbdad7] pb-4 lg:flex-row lg:items-center lg:justify-between">
+                    <div>
+                      <p className="text-sm font-medium text-[#121212]">
+                        책장 페이지 {activeTimelinePosition + 1}
+                      </p>
+                      <p className="mt-1 text-xs text-[#616161]">
+                        {activeTimelinePosition + 1} / {timeline.length}
+                      </p>
+                    </div>
+
+                    <div className="flex flex-wrap items-center gap-2">
+                      <button
+                        type="button"
+                        onClick={() =>
+                          setActiveTimelineIndex(index =>
+                            Math.max(index - 1, 0)
+                          )
+                        }
+                        disabled={activeTimelinePosition === 0}
+                        className="inline-flex h-9 items-center gap-1 border border-[#dbdad7] bg-white px-3 text-xs text-[#616161] transition-colors hover:text-[#121212] disabled:opacity-40"
+                      >
+                        <ChevronLeft className="h-3.5 w-3.5" />
+                        이전
+                      </button>
+                      <div className="flex max-w-full gap-1 overflow-x-auto">
+                        {timeline.map((item, index) => (
+                          <button
+                            key={item.id}
+                            type="button"
+                            onClick={() => setActiveTimelineIndex(index)}
+                            className={`h-9 min-w-9 border px-3 text-xs ${
+                              index === activeTimelinePosition
+                                ? "border-[#18181b] bg-[#18181b] text-white"
+                                : "border-[#dbdad7] bg-white text-[#616161]"
+                            }`}
+                            aria-label={`책장 페이지 ${index + 1} 편집`}
+                          >
+                            {index + 1}
+                          </button>
+                        ))}
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() =>
+                          setActiveTimelineIndex(index =>
+                            Math.min(index + 1, timeline.length - 1)
+                          )
+                        }
+                        disabled={activeTimelinePosition >= timeline.length - 1}
+                        className="inline-flex h-9 items-center gap-1 border border-[#dbdad7] bg-white px-3 text-xs text-[#616161] transition-colors hover:text-[#121212] disabled:opacity-40"
+                      >
+                        다음
+                        <ChevronRight className="h-3.5 w-3.5" />
+                      </button>
+                      {timeline.length > 1 && activeTimeline && (
+                        <button
+                          type="button"
+                          onClick={() => removeTimeline(activeTimeline.id)}
+                          className="inline-flex h-9 items-center gap-2 px-1 text-sm text-[#616161] transition-colors hover:text-[#121212]"
+                        >
+                          <Trash2 className="h-4 w-4" strokeWidth={1.6} />
+                          삭제
+                        </button>
+                      )}
+                    </div>
+                  </div>
+
+                  {activeTimeline && (
+                    <div className="mt-5 grid gap-5 lg:grid-cols-[260px_minmax(0,1fr)]">
+                      <div>
+                        <label className={labelClass}>사진</label>
+                        <label className="flex aspect-[4/3] w-full flex-col items-center justify-center overflow-hidden border border-dashed border-[#dbdad7] bg-white text-center text-sm text-[#616161] transition-colors hover:border-[#18181b] hover:text-[#121212]">
+                          {activeTimeline.photo ? (
+                            <img
+                              src={activeTimeline.photo.dataUrl}
+                              alt={`책장 페이지 ${activeTimelinePosition + 1} 사진`}
+                              className="h-full w-full object-cover saturate-[1.05] contrast-[1.01] brightness-[1.02]"
+                            />
+                          ) : (
+                            <>
+                              <ImagePlus
+                                className="mb-2 h-5 w-5"
+                                strokeWidth={1.5}
+                              />
+                              사진 넣기
+                            </>
+                          )}
+                          <input
+                            type="file"
+                            accept="image/*"
+                            onChange={event =>
+                              updateTimelinePhoto(activeTimeline.id, event)
+                            }
+                            className="sr-only"
+                          />
+                        </label>
+                        {activeTimeline.photo && (
                           <button
                             type="button"
-                            onClick={() => removeTimeline(item.id)}
-                            className="inline-flex h-9 items-center gap-2 px-1 text-sm text-[#616161] transition-colors hover:text-[#121212]"
+                            onClick={() =>
+                              setTimeline(items =>
+                                items.map(current =>
+                                  current.id === activeTimeline.id
+                                    ? { ...current, photo: null }
+                                    : current
+                                )
+                              )
+                            }
+                            className="mt-2 text-xs text-[#616161] underline-offset-4 hover:text-[#121212] hover:underline"
                           >
-                            <Trash2 className="h-4 w-4" strokeWidth={1.6} />
-                            삭제
+                            사진 빼기
                           </button>
                         )}
                       </div>
 
-                      <div className="mt-4 grid gap-5 lg:grid-cols-[260px_minmax(0,1fr)]">
-                        <div>
-                          <label className={labelClass}>사진</label>
-                          <label className="flex aspect-[4/3] w-full flex-col items-center justify-center overflow-hidden border border-dashed border-[#dbdad7] bg-white text-center text-sm text-[#616161] transition-colors hover:border-[#18181b] hover:text-[#121212]">
-                            {item.photo ? (
-                              <img
-                                src={item.photo.dataUrl}
-                                alt={`책장 페이지 ${index + 1} 사진`}
-                                className="h-full w-full object-cover saturate-[1.05] contrast-[1.01] brightness-[1.02]"
-                              />
-                            ) : (
-                              <>
-                                <ImagePlus
-                                  className="mb-2 h-5 w-5"
-                                  strokeWidth={1.5}
-                                />
-                                사진 넣기
-                              </>
-                            )}
-                            <input
-                              type="file"
-                              accept="image/*"
-                              onChange={event =>
-                                updateTimelinePhoto(item.id, event)
-                              }
-                              className="sr-only"
-                            />
-                          </label>
-                          {item.photo && (
-                            <button
-                              type="button"
-                              onClick={() =>
-                                setTimeline(items =>
-                                  items.map(current =>
-                                    current.id === item.id
-                                      ? { ...current, photo: null }
-                                      : current
-                                  )
-                                )
-                              }
-                              className="mt-2 text-xs text-[#616161] underline-offset-4 hover:text-[#121212] hover:underline"
-                            >
-                              사진 빼기
-                            </button>
-                          )}
-                        </div>
-
-                        <div className="space-y-4">
-                          <div className="grid gap-4 md:grid-cols-[120px_minmax(0,1fr)]">
-                            <input
-                              className={inputClass}
-                              value={item.year}
-                              onChange={event =>
-                                updateTimeline(
-                                  item.id,
-                                  "year",
-                                  event.target.value
-                                )
-                              }
-                              placeholder="연도"
-                            />
-                            <input
-                              className={inputClass}
-                              value={item.title}
-                              onChange={event =>
-                                updateTimeline(
-                                  item.id,
-                                  "title",
-                                  event.target.value
-                                )
-                              }
-                              placeholder="페이지 제목"
-                            />
-                          </div>
-
-                          <textarea
-                            className="min-h-32 w-full resize-y border border-[#dbdad7] bg-white p-4 text-sm leading-7 text-[#121212] outline-none transition-colors placeholder:text-[#9a9a9a] focus:border-[#18181b]"
-                            value={item.description}
+                      <div className="space-y-4">
+                        <div className="grid gap-4 md:grid-cols-[120px_minmax(0,1fr)]">
+                          <input
+                            className={inputClass}
+                            value={activeTimeline.year}
                             onChange={event =>
                               updateTimeline(
-                                item.id,
-                                "description",
+                                activeTimeline.id,
+                                "year",
                                 event.target.value
                               )
                             }
-                            placeholder="사진에 담긴 일, 그때의 마음, 가족이 기억하고 싶은 내용을 적어 주세요."
+                            placeholder="연도"
+                          />
+                          <input
+                            className={inputClass}
+                            value={activeTimeline.title}
+                            onChange={event =>
+                              updateTimeline(
+                                activeTimeline.id,
+                                "title",
+                                event.target.value
+                              )
+                            }
+                            placeholder="페이지 제목"
                           />
                         </div>
+
+                        <textarea
+                          className="min-h-32 w-full resize-y border border-[#dbdad7] bg-white p-4 text-sm leading-7 text-[#121212] outline-none transition-colors placeholder:text-[#9a9a9a] focus:border-[#18181b]"
+                          value={activeTimeline.description}
+                          onChange={event =>
+                            updateTimeline(
+                              activeTimeline.id,
+                              "description",
+                              event.target.value
+                            )
+                          }
+                          placeholder="사진에 담긴 일, 그때의 마음, 가족이 기억하고 싶은 내용을 적어 주세요."
+                        />
                       </div>
                     </div>
-                  ))}
+                  )}
                 </div>
 
                 <button
