@@ -136,6 +136,9 @@ const textAreaClass =
   "min-h-36 w-full resize-y border border-[#dbdad7] bg-transparent p-4 text-sm leading-7 text-[#121212] outline-none transition-colors placeholder:text-[#9a9a9a] focus:border-[#18181b]";
 const labelClass = "mb-2 block text-xs font-medium text-[#616161]";
 const errorClass = "mt-2 text-xs text-[#9f2a2a]";
+const MAX_GALLERY_PHOTOS = 24;
+const GALLERY_PHOTO_MAX_BYTES = 1_200_000;
+const GALLERY_PHOTO_MAX_DIMENSION = 1800;
 
 const makeId = () => {
   const nativeUuid = globalThis.crypto?.randomUUID;
@@ -484,13 +487,49 @@ export default function MemorialCreate() {
   };
 
   const handleGalleryChange = async (event: ChangeEvent<HTMLInputElement>) => {
-    const files = Array.from(event.target.files || []).slice(0, 6);
-    if (files.length === 0) return;
+    const selectedFiles = Array.from(event.target.files || []);
+    event.target.value = "";
+    if (selectedFiles.length === 0) return;
 
-    setGalleryPhotos(
-      await Promise.all(
-        files.map(file => compressImageFile(file, { maxBytes: 2_500_000 }))
+    const remainingCount = MAX_GALLERY_PHOTOS - galleryPhotos.length;
+    if (remainingCount <= 0) {
+      setNotice(
+        `활동 사진은 최대 ${MAX_GALLERY_PHOTOS}장까지 올릴 수 있습니다.`
+      );
+      return;
+    }
+
+    const files = selectedFiles.slice(0, remainingCount);
+    const compressedPhotos = await Promise.all(
+      files.map(file =>
+        compressImageFile(file, {
+          maxBytes: GALLERY_PHOTO_MAX_BYTES,
+          maxDimension: GALLERY_PHOTO_MAX_DIMENSION,
+        })
       )
+    );
+
+    setGalleryPhotos(current =>
+      [...current, ...compressedPhotos].slice(0, MAX_GALLERY_PHOTOS)
+    );
+    if (selectedFiles.length > remainingCount) {
+      setNotice(`활동 사진은 최대 ${MAX_GALLERY_PHOTOS}장까지만 추가했습니다.`);
+    } else {
+      setNotice(`활동 사진 ${files.length}장을 추가했습니다.`);
+    }
+    setSubmitted(false);
+    setCreatedMemorial(null);
+  };
+
+  const clearGalleryPhotos = () => {
+    setGalleryPhotos([]);
+    setSubmitted(false);
+    setCreatedMemorial(null);
+  };
+
+  const removeGalleryPhoto = (index: number) => {
+    setGalleryPhotos(current =>
+      current.filter((_, itemIndex) => itemIndex !== index)
     );
     setSubmitted(false);
     setCreatedMemorial(null);
@@ -1253,7 +1292,12 @@ export default function MemorialCreate() {
                     <label className={labelClass}>활동 사진</label>
                     <label className="flex min-h-36 w-full flex-col items-center justify-center gap-3 border border-dashed border-[#dbdad7] text-center text-sm text-[#616161] transition-colors hover:border-[#18181b] hover:text-[#121212]">
                       <ImagePlus className="h-6 w-6" strokeWidth={1.5} />
-                      최대 6장 선택
+                      <span>
+                        사진 추가 ({galleryPhotos.length}/{MAX_GALLERY_PHOTOS})
+                      </span>
+                      <span className="text-xs text-[#8a8172]">
+                        여러 장을 나눠서 계속 추가할 수 있습니다.
+                      </span>
                       <input
                         type="file"
                         accept="image/*"
@@ -1264,16 +1308,47 @@ export default function MemorialCreate() {
                     </label>
 
                     {galleryPhotos.length > 0 && (
-                      <div className="mt-4 grid grid-cols-3 gap-px bg-[#dbdad7] sm:grid-cols-6">
-                        {galleryPhotos.map((photo, index) => (
-                          <img
-                            key={`${photo.fileName}-${index}`}
-                            src={photo.dataUrl}
-                            alt={`활동 사진 ${index + 1}`}
-                            className="aspect-square w-full bg-white object-cover saturate-[1.05] contrast-[1.01] brightness-[1.02]"
-                          />
-                        ))}
-                      </div>
+                      <>
+                        <div className="mt-4 flex items-center justify-between gap-3">
+                          <p className="text-xs text-[#616161]">
+                            선택한 활동 사진 {galleryPhotos.length}장
+                          </p>
+                          <button
+                            type="button"
+                            onClick={clearGalleryPhotos}
+                            className="text-xs text-[#616161] underline-offset-4 hover:text-[#121212] hover:underline"
+                          >
+                            전체 비우기
+                          </button>
+                        </div>
+                        <div className="mt-3 max-h-[420px] overflow-y-auto border border-[#dbdad7] bg-[#f6f5f2] p-1">
+                          <div className="grid grid-cols-4 gap-1 sm:grid-cols-6 lg:grid-cols-8">
+                            {galleryPhotos.map((photo, index) => (
+                              <div
+                                key={`${photo.fileName}-${index}`}
+                                className="group relative border border-white bg-white"
+                              >
+                                <img
+                                  src={photo.dataUrl}
+                                  alt={`활동 사진 ${index + 1}`}
+                                  className="aspect-square w-full object-cover saturate-[1.05] contrast-[1.01] brightness-[1.02]"
+                                />
+                                <button
+                                  type="button"
+                                  onClick={() => removeGalleryPhoto(index)}
+                                  className="absolute right-1 top-1 flex h-7 w-7 items-center justify-center bg-white/92 text-[#121212] shadow-sm transition-opacity sm:opacity-0 sm:group-hover:opacity-100"
+                                  aria-label={`활동 사진 ${index + 1} 삭제`}
+                                >
+                                  <Trash2
+                                    className="h-3.5 w-3.5"
+                                    strokeWidth={1.7}
+                                  />
+                                </button>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      </>
                     )}
                   </div>
                 </div>

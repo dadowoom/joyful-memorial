@@ -113,7 +113,7 @@ const memorialCreateInput = z.object({
         isRepresentative: z.boolean().optional(),
       })
     )
-    .max(7)
+    .max(25)
     .default([]),
   bookPages: z.array(bookPageCreateInput).max(80).default([]),
   books: z
