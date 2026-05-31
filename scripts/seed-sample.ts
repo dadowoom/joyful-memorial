@@ -204,7 +204,7 @@ async function main() {
     )
   );
 
-  await ensureVideo(memorial.id);
+  await ensureVideos(memorial.id);
   const bookId = await ensureBook(memorial.id);
   await ensureBookPages(bookId);
   await ensureLetter(memorial.id);
@@ -276,43 +276,63 @@ async function ensureGalleryPhoto(
   await db.insert(memorialGalleryPhotos).values({ memorialId, ...photo });
 }
 
-async function ensureVideo(memorialId: number) {
+async function ensureVideos(memorialId: number) {
   const db = await getDb();
   if (!db) throw new Error("Database is not available.");
 
-  const youtubeVideoId = "ysz5S6PUM-U";
-  const [existing] = await db
-    .select({ id: memorialVideos.id })
-    .from(memorialVideos)
-    .where(
-      and(
-        eq(memorialVideos.memorialId, memorialId),
-        eq(memorialVideos.youtubeVideoId, youtubeVideoId)
-      )
-    )
-    .limit(1);
+  const sampleVideos = [
+    {
+      title: "가족에게 남기는 감사",
+      description: "가족이 직접 등록할 영상을 위한 샘플 항목입니다.",
+      youtubeVideoId: "ysz5S6PUM-U",
+    },
+    {
+      title: "포항에서 보낸 하루",
+      description: "포항에서 함께 보낸 시간을 영상으로 남기는 예시입니다.",
+      youtubeVideoId: "M7lc1UVf-VE",
+    },
+    {
+      title: "함께 걷던 시간",
+      description: "가족의 목소리와 표정을 함께 보관하는 예시 영상입니다.",
+      youtubeVideoId: "aqz-KE-bpKQ",
+    },
+  ];
 
-  if (existing) {
-    await db
-      .update(memorialVideos)
-      .set({
-        title: "기쁨의 기록",
-        description: "가족이 직접 등록할 영상을 위한 샘플 항목입니다.",
-        isVisible: 0,
-        sortOrder: 0,
-        updatedAt: new Date(),
-      })
-      .where(eq(memorialVideos.id, existing.id));
-    return;
+  for (const [sortOrder, video] of sampleVideos.entries()) {
+    const [existing] = await db
+      .select({ id: memorialVideos.id })
+      .from(memorialVideos)
+      .where(
+        and(
+          eq(memorialVideos.memorialId, memorialId),
+          eq(memorialVideos.youtubeVideoId, video.youtubeVideoId)
+        )
+      )
+      .limit(1);
+
+    if (existing) {
+      await db
+        .update(memorialVideos)
+        .set({
+          title: video.title,
+          description: video.description,
+          isVisible: 1,
+          sortOrder,
+          updatedAt: new Date(),
+        })
+        .where(eq(memorialVideos.id, existing.id));
+      continue;
+    }
+
+    await db.insert(memorialVideos).values({
+      memorialId,
+      title: video.title,
+      description: video.description,
+      youtubeVideoId: video.youtubeVideoId,
+      isVisible: 1,
+      sortOrder,
+    });
   }
-  await db.insert(memorialVideos).values({
-    memorialId,
-    title: "기쁨의 기록",
-    description: "가족이 직접 등록할 영상을 위한 샘플 항목입니다.",
-    youtubeVideoId,
-    isVisible: 0,
-    sortOrder: 0,
-  });
 }
 
 async function ensureBook(memorialId: number) {

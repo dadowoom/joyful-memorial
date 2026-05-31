@@ -1,5 +1,4 @@
 import InlineEditText from "@/components/InlineEditText";
-import { toImgUrl } from "@/lib/imageUrl";
 import { trpc } from "@/lib/trpc";
 import {
   Check,
@@ -60,7 +59,6 @@ export default function MemorialVideoSection({
   memorialId,
   memorialName,
   churchName,
-  coverImageUrl,
   isAdmin,
   accessToken,
 }: MemorialVideoSectionProps) {
@@ -73,6 +71,7 @@ export default function MemorialVideoSection({
     [videos]
   );
   const canEdit = isAdmin && memorialId > 0;
+  const displayVideos = canEdit ? videos : visibleVideos;
   const [selectedVideoId, setSelectedVideoId] = useState<string | null>(null);
   const [showAddForm, setShowAddForm] = useState(false);
   const [newTitle, setNewTitle] = useState("");
@@ -81,9 +80,9 @@ export default function MemorialVideoSection({
 
   const currentVideo = useMemo(
     () =>
-      videos.find(video => video.youtubeVideoId === selectedVideoId) ??
-      videos[0],
-    [selectedVideoId, videos]
+      displayVideos.find(video => video.youtubeVideoId === selectedVideoId) ??
+      displayVideos[0],
+    [selectedVideoId, displayVideos]
   );
 
   const createVideo = trpc.video.create.useMutation({
@@ -150,7 +149,7 @@ export default function MemorialVideoSection({
     toast.success("영상 순서가 변경되었습니다.");
   };
 
-  if (!videosQuery.isLoading && visibleVideos.length === 0 && !canEdit) {
+  if (!videosQuery.isLoading && displayVideos.length === 0 && !canEdit) {
     return null;
   }
 
@@ -176,72 +175,37 @@ export default function MemorialVideoSection({
           <div className="border border-[#e6ded1] bg-white py-16 text-center text-sm text-[#6f6a61]">
             영상을 불러오고 있습니다.
           </div>
-        ) : !canEdit && visibleVideos.length > 0 ? (
-          <div className="mx-auto grid max-w-5xl overflow-hidden border border-[#e6ded1] bg-[#fbfaf8] md:grid-cols-[minmax(0,1.08fr)_minmax(280px,0.72fr)]">
-            <div className="relative min-h-[260px] overflow-hidden bg-[#2e2218] md:min-h-[420px]">
-              {coverImageUrl ? (
-                <img
-                  src={toImgUrl(coverImageUrl)}
-                  alt={`${memorialName} 영상 기록`}
-                  className="absolute inset-0 h-full w-full object-cover saturate-[1.05] contrast-[1.01] brightness-[1.02]"
-                />
-              ) : (
-                <div className="absolute inset-0 bg-[#2e2218]" />
-              )}
-              <div className="absolute inset-0 bg-[#2e2218]/35" />
-              <div className="absolute inset-0 bg-gradient-to-t from-[#1f1d1a]/72 via-transparent to-white/10" />
-              <div className="absolute inset-0 flex items-center justify-center">
-                <span className="flex h-16 w-16 items-center justify-center border border-white/70 bg-white/82 text-[#2e2218] shadow-[0_16px_50px_rgba(31,29,26,0.18)]">
-                  <Play className="ml-1 h-7 w-7 fill-current" strokeWidth={1.6} />
-                </span>
-              </div>
-              <div className="absolute bottom-6 left-6 right-6">
-                <p className="text-xs font-medium uppercase tracking-[0.26em] text-white/78">
-                  Video Memory
-                </p>
-                <p
-                  className="mt-3 text-2xl font-light text-white md:text-3xl"
-                  style={{ fontFamily: "'Noto Serif KR', serif" }}
-                >
-                  영상으로 남은 기억
-                </p>
-              </div>
-            </div>
-
-            <div className="flex flex-col justify-center p-6 md:p-9">
-              <p className="text-sm leading-7 text-[#6f6a61]">
-                사진과 글로 다 담기 어려운 가족의 표정과 목소리를 함께
-                기억할 수 있도록 영상 기록을 준비하는 공간입니다.
-              </p>
-              <div className="mt-8 border-t border-[#e6ded1] pt-6">
-                <p className="text-xs font-medium uppercase tracking-[0.24em] text-[#7f673d]">
-                  Archive
-                </p>
-                <p
-                  className="mt-3 text-xl font-light text-[#2e2218]"
-                  style={{ fontFamily: "'Noto Serif KR', serif" }}
-                >
-                  영상 기록 {visibleVideos.length}편
-                </p>
-                <p className="mt-3 text-sm leading-7 text-[#6f6a61]">
-                  {churchName} · {memorialName}
-                </p>
-              </div>
-            </div>
-          </div>
-        ) : videos.length > 0 ? (
+        ) : displayVideos.length > 0 ? (
           <div className="mx-auto grid max-w-6xl gap-4 lg:grid-cols-[minmax(0,1fr)_300px]">
-            <div className="overflow-hidden border border-[#e6ded1] bg-black">
+            <div className="overflow-hidden border border-[#e6ded1] bg-white">
               {currentVideo ? (
-                <div className="aspect-video">
-                  <iframe
-                    src={`https://www.youtube.com/embed/${currentVideo.youtubeVideoId}`}
-                    title={currentVideo.title}
-                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                    allowFullScreen
-                    className="h-full w-full"
-                  />
-                </div>
+                <>
+                  <div className="aspect-video bg-black">
+                    <iframe
+                      src={`https://www.youtube.com/embed/${currentVideo.youtubeVideoId}`}
+                      title={currentVideo.title}
+                      allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                      allowFullScreen
+                      className="h-full w-full"
+                    />
+                  </div>
+                  <div className="border-t border-[#e6ded1] bg-[#fbfaf8] p-5">
+                    <p className="text-xs font-medium uppercase tracking-[0.22em] text-[#7f673d]">
+                      {displayVideos.length} Videos
+                    </p>
+                    <h3
+                      className="mt-2 text-xl font-light text-[#2e2218]"
+                      style={{ fontFamily: "'Noto Serif KR', serif" }}
+                    >
+                      {currentVideo.title}
+                    </h3>
+                    {currentVideo.description && (
+                      <p className="mt-2 text-sm leading-7 text-[#6f6a61]">
+                        {currentVideo.description}
+                      </p>
+                    )}
+                  </div>
+                </>
               ) : (
                 <div className="flex aspect-video items-center justify-center bg-[#fbfaf8]">
                   <Youtube className="h-10 w-10 text-[#7f673d]" />
@@ -250,9 +214,9 @@ export default function MemorialVideoSection({
             </div>
 
             <div className="space-y-2 lg:max-h-[430px] lg:overflow-y-auto">
-              {videos.map((video, index) => {
+              {displayVideos.map((video, index) => {
                 const active =
-                  (selectedVideoId ?? videos[0]?.youtubeVideoId) ===
+                  (selectedVideoId ?? displayVideos[0]?.youtubeVideoId) ===
                   video.youtubeVideoId;
                 const hidden = video.isVisible === 0;
                 return (
@@ -296,8 +260,8 @@ export default function MemorialVideoSection({
                             video.title
                           )}
                         </span>
-                        {hidden && (
-                            <span className="mt-1 inline-block border border-[#e6ded1] px-2 py-0.5 text-[11px] text-[#6f6a61]">
+                        {canEdit && hidden && (
+                          <span className="mt-1 inline-block border border-[#e6ded1] px-2 py-0.5 text-[11px] text-[#6f6a61]">
                             숨김
                           </span>
                         )}
