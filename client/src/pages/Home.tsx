@@ -5,10 +5,14 @@ import {
   ArrowRight,
   BookOpenText,
   HandHeart,
+  Image,
   Mail,
   PenLine,
+  RefreshCw,
   Search,
+  ShieldCheck,
   Sprout,
+  Users,
 } from "lucide-react";
 import { FormEvent, useMemo, useState } from "react";
 import { Link, useLocation } from "wouter";
@@ -46,7 +50,7 @@ const SERVICES = [
     title: "기념관 찾기",
     desc: "성함으로 등록된 인생기념관을 찾고, 비공개 공간은 비밀번호 확인 후 입장합니다.",
     icon: Search,
-    href: "/memorial-garden#faith-memorials",
+    href: "/memorial-garden#life-memorials",
   },
   {
     title: "인생기념관 만들기",
@@ -55,10 +59,33 @@ const SERVICES = [
     href: "/memorial/create",
   },
   {
-    title: "감사글과 마음글",
-    desc: "인생기념관에는 감사글을, 추모 기록 전환 이후에는 가족의 마음글을 남깁니다.",
+    title: "가족의 마음글",
+    desc: "가족과 가까운 사람들이 안부, 응원, 고마웠던 기억을 인생기념관에 함께 남깁니다.",
     icon: Mail,
     href: "/letters",
+  },
+];
+
+const MANAGED_SERVICE = [
+  {
+    title: "사진·영상 아카이브",
+    desc: "오래된 사진, 가족 영상, 대표 이미지를 한곳에 모아 보기 좋게 정리합니다.",
+    icon: Image,
+  },
+  {
+    title: "책장·연표 작성 지원",
+    desc: "부모님의 생애 흐름을 책 페이지와 연표로 나누어 계속 보완할 수 있습니다.",
+    icon: BookOpenText,
+  },
+  {
+    title: "가족 비공개 공간",
+    desc: "공개 여부와 비밀번호를 설정해 가족끼리만 보는 기록 공간으로 운영할 수 있습니다.",
+    icon: ShieldCheck,
+  },
+  {
+    title: "월 관리와 계속 수정",
+    desc: "처음 등록한 뒤에도 새 사진, 문장, 가족 메모를 이어서 다듬는 관리형 서비스입니다.",
+    icon: RefreshCw,
   },
 ];
 
@@ -87,7 +114,7 @@ export default function Home() {
     event.preventDefault();
     const keyword = search.trim();
     if (!keyword) {
-      setLocation("/memorial-garden#faith-memorials");
+      setLocation("/memorial-garden#life-memorials");
       return;
     }
     setLocation(`/memorial/search?q=${encodeURIComponent(keyword)}`);
@@ -258,6 +285,75 @@ export default function Home() {
                         </p>
                       </article>
                     </Link>
+                  );
+                })}
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <section className="border-b bg-white" style={{ borderColor: line }}>
+          <div className="container py-14 md:py-20">
+            <div className="grid gap-10 lg:grid-cols-[minmax(0,0.8fr)_minmax(0,1.2fr)]">
+              <div>
+                <p
+                  className="text-[11px] font-medium uppercase"
+                  style={{ letterSpacing: "0.18em", color: olive }}
+                >
+                  Managed Family Archive
+                </p>
+                <h2
+                  className="mt-4 text-3xl font-normal leading-tight md:text-5xl"
+                  style={serifStyle}
+                >
+                  포항 가족기록
+                  <br />월 관리형 서비스
+                </h2>
+                <p
+                  className="mt-6 max-w-md text-sm leading-7"
+                  style={{ color: muted }}
+                >
+                  한 번 만들고 끝나는 페이지가 아니라, 부모님의 삶을 가족이 계속
+                  보완하는 온라인 인생기록관입니다. 사진, 영상, 책장, 연표, 가족
+                  비공개 기록을 차분히 관리합니다.
+                </p>
+                <Link href="/memorial/create">
+                  <button
+                    className="mt-7 inline-flex h-11 items-center justify-center gap-2 rounded-full px-4 text-sm font-medium text-white"
+                    style={{ background: ink }}
+                  >
+                    <Users className="h-4 w-4" strokeWidth={1.7} />
+                    가족기록 등록하기
+                  </button>
+                </Link>
+              </div>
+
+              <div
+                className="grid gap-px overflow-hidden rounded-[8px] border sm:grid-cols-2"
+                style={{ borderColor: line, background: line }}
+              >
+                {MANAGED_SERVICE.map(item => {
+                  const Icon = item.icon;
+                  return (
+                    <article key={item.title} className="bg-[#fffdf8] p-6">
+                      <Icon
+                        className="h-5 w-5"
+                        style={{ color: olive }}
+                        strokeWidth={1.6}
+                      />
+                      <h3
+                        className="mt-8 text-xl font-normal"
+                        style={serifStyle}
+                      >
+                        {item.title}
+                      </h3>
+                      <p
+                        className="mt-4 text-sm leading-7"
+                        style={{ color: muted }}
+                      >
+                        {item.desc}
+                      </p>
+                    </article>
                   );
                 })}
               </div>

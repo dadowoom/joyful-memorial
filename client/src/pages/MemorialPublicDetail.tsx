@@ -242,11 +242,13 @@ function PrivateMemorialGate({
               href={
                 isMemorialHall
                   ? "/memorial/search"
-                  : "/memorial-garden#faith-memorials"
+                  : "/memorial-garden#life-memorials"
               }
             >
               <span className="mt-3 block cursor-pointer text-center text-xs text-[#616161] underline-offset-4 hover:underline">
-                {isMemorialHall ? "추모 기록 검색으로 돌아가기" : "목록으로 돌아가기"}
+                {isMemorialHall
+                  ? "추모 기록 검색으로 돌아가기"
+                  : "목록으로 돌아가기"}
               </span>
             </Link>
           </form>

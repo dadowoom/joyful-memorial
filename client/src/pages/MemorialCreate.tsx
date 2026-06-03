@@ -8,14 +8,19 @@ import {
 import { trpc } from "@/lib/trpc";
 import {
   ArrowRight,
+  BookOpenText,
+  CalendarDays,
   Check,
   ChevronLeft,
   ChevronRight,
   ImagePlus,
+  LockKeyhole,
   Plus,
   Save,
   Trash2,
   Upload,
+  Users,
+  Video,
 } from "lucide-react";
 import { ChangeEvent, FormEvent, useEffect, useMemo, useState } from "react";
 import { Link, useLocation } from "wouter";
@@ -128,6 +133,29 @@ const roleSuggestions = [
   "외할머니",
   "선생님",
   "가족",
+];
+
+const SERVICE_PROMISES = [
+  {
+    title: "초기 등록",
+    desc: "성함, 호칭, 대표 문장, 삶의 이야기를 입력해 인생기념관의 기본 골격을 만듭니다.",
+    icon: CalendarDays,
+  },
+  {
+    title: "월 관리",
+    desc: "등록 이후에도 사진, 영상, 책 페이지, 연표를 계속 보완하는 관리형 기록입니다.",
+    icon: BookOpenText,
+  },
+  {
+    title: "자료 업로드",
+    desc: "대표 사진과 활동 사진을 올리고, 가족 영상은 인생기념관 운영 과정에서 함께 정리합니다.",
+    icon: Video,
+  },
+  {
+    title: "가족 보호",
+    desc: "공개 범위와 비밀번호를 설정하고, 가족이 함께 읽고 남길 수 있는 공간으로 운영합니다.",
+    icon: LockKeyhole,
+  },
 ];
 
 const inputClass =
@@ -763,6 +791,21 @@ export default function MemorialCreate() {
                   </div>
                 </div>
               )}
+
+              <div className="mt-6 border-t border-[#dbdad7] pt-5">
+                <div className="flex items-start gap-3">
+                  <Users className="mt-0.5 h-4 w-4 shrink-0 text-[#7b8a61]" />
+                  <div>
+                    <p className="text-sm font-medium text-[#121212]">
+                      월 관리형 인생기념관
+                    </p>
+                    <p className="mt-2 text-xs leading-6 text-[#616161]">
+                      처음 등록한 뒤에도 가족 자료를 이어서 정리하고 공개 범위를
+                      조정할 수 있습니다.
+                    </p>
+                  </div>
+                </div>
+              </div>
             </aside>
           </div>
         </section>
@@ -810,6 +853,33 @@ export default function MemorialCreate() {
                   <p className="mt-2 break-all text-sm text-[#121212]">
                     /memorial/{slugPreview}/archive
                   </p>
+                </div>
+
+                <div className="mt-8 border-t border-[#dbdad7] pt-5">
+                  <p className="text-xs font-medium text-[#7b8a61]">
+                    서비스 포함
+                  </p>
+                  <ul className="mt-4 space-y-4">
+                    {SERVICE_PROMISES.map(item => {
+                      const Icon = item.icon;
+                      return (
+                        <li key={item.title} className="flex gap-3">
+                          <Icon
+                            className="mt-0.5 h-4 w-4 shrink-0 text-[#7b8a61]"
+                            strokeWidth={1.6}
+                          />
+                          <div>
+                            <p className="text-xs font-medium text-[#121212]">
+                              {item.title}
+                            </p>
+                            <p className="mt-1 text-xs leading-5 text-[#616161]">
+                              {item.desc}
+                            </p>
+                          </div>
+                        </li>
+                      );
+                    })}
+                  </ul>
                 </div>
               </div>
             </aside>

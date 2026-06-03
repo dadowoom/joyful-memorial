@@ -31,7 +31,7 @@ const coral = "#d8896f";
 const FEATURES = [
   {
     title: "삶의 이야기",
-    desc: "현재의 삶과 섬김, 가족이 기억하는 감사의 고백을 한곳에 정리합니다.",
+    desc: "부모님의 성장, 일, 가족, 오래 기억하고 싶은 말을 한곳에 정리합니다.",
     icon: BookOpenText,
   },
   {
@@ -40,9 +40,24 @@ const FEATURES = [
     icon: Image,
   },
   {
-    title: "감사글",
-    desc: "가족과 가까운 사람들이 응원과 감사의 마음을 남깁니다.",
+    title: "가족의 마음글",
+    desc: "가족과 가까운 사람들이 안부, 응원, 고마웠던 기억을 남깁니다.",
     icon: MessageCircle,
+  },
+];
+
+const ARCHIVE_VALUES = [
+  {
+    label: "포항 가족기록",
+    value: "부모님의 삶을 지역 가족 아카이브로 정리",
+  },
+  {
+    label: "월 관리",
+    value: "사진, 영상, 책장, 연표를 계속 보완",
+  },
+  {
+    label: "공개 선택",
+    value: "검색 공개 또는 비밀번호 비공개 운영",
   },
 ];
 
@@ -99,12 +114,15 @@ export default function MemorialGarden() {
                 <br />
                 인생기념관
               </h1>
-              <p className="mt-7 max-w-2xl text-base leading-8" style={{ color: muted }}>
+              <p
+                className="mt-7 max-w-2xl text-base leading-8"
+                style={{ color: muted }}
+              >
                 부모님의 인생과 가족의 기억을 밝고 따뜻한 기록으로 이어가는
                 공간입니다.
               </p>
               <div className="mt-8 flex flex-col gap-3 sm:flex-row">
-                <a href="#faith-memorials">
+                <a href="#life-memorials">
                   <button
                     className="inline-flex h-12 items-center justify-center gap-2 rounded-full px-5 text-sm font-semibold text-white"
                     style={{ background: green }}
@@ -148,7 +166,7 @@ export default function MemorialGarden() {
         </section>
 
         <section
-          id="faith-memorials"
+          id="life-memorials"
           className="scroll-mt-20 border-b bg-white py-14 md:py-20"
           style={{ borderColor: line }}
         >
@@ -168,10 +186,32 @@ export default function MemorialGarden() {
                   등록된 인생기념관
                 </h2>
               </div>
-              <p className="max-w-md text-sm leading-7" style={{ color: muted }}>
-                인물 카드를 통해 이름, 호칭, 사진을 확인하고 각 인생기념관으로
-                바로 이동할 수 있습니다.
+              <p
+                className="max-w-md text-sm leading-7"
+                style={{ color: muted }}
+              >
+                포항 시민과 가족이 등록한 인생기념관을 이름, 호칭, 가족 키워드로
+                찾고 각 기록관으로 바로 이동할 수 있습니다.
               </p>
+            </div>
+
+            <div
+              className="mb-8 grid gap-px overflow-hidden rounded-[8px] border bg-[#e7ddc8] md:grid-cols-3"
+              style={{ borderColor: line }}
+            >
+              {ARCHIVE_VALUES.map(item => (
+                <div key={item.label} className="bg-[#fffdf7] p-5">
+                  <p
+                    className="text-[11px] font-semibold uppercase"
+                    style={{ letterSpacing: "0.12em", color: yellow }}
+                  >
+                    {item.label}
+                  </p>
+                  <p className="mt-3 text-sm leading-7" style={{ color: ink }}>
+                    {item.value}
+                  </p>
+                </div>
+              ))}
             </div>
 
             <div className="mb-8 grid gap-3 md:grid-cols-[minmax(0,440px)_1fr] md:items-center">
@@ -198,7 +238,13 @@ export default function MemorialGarden() {
             {memorialsQuery.isLoading ? (
               <StatePanel text="등록된 인물을 불러오고 있습니다." />
             ) : filtered.length === 0 ? (
-              <StatePanel text={memorials.length ? "검색 결과가 없습니다." : "아직 공개된 인생기념관이 없습니다."} />
+              <StatePanel
+                text={
+                  memorials.length
+                    ? "검색 결과가 없습니다."
+                    : "아직 공개된 인생기념관이 없습니다."
+                }
+              />
             ) : (
               <>
                 <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
@@ -214,11 +260,17 @@ export default function MemorialGarden() {
                               src={toImgUrl(memorial.photoUrl)}
                               alt={memorial.photoCaption || memorial.name}
                               className="h-full w-full object-cover object-center transition duration-500 group-hover:scale-[1.02]"
-                              style={{ filter: "saturate(1.04) brightness(1.02)" }}
+                              style={{
+                                filter: "saturate(1.04) brightness(1.02)",
+                              }}
                             />
                           ) : (
                             <div className="flex h-full w-full items-center justify-center bg-[#f6f8ed]">
-                              <UserRound className="h-12 w-12" style={{ color: green }} strokeWidth={1.3} />
+                              <UserRound
+                                className="h-12 w-12"
+                                style={{ color: green }}
+                                strokeWidth={1.3}
+                              />
                             </div>
                           )}
                         </div>
@@ -227,7 +279,10 @@ export default function MemorialGarden() {
                             className="truncate text-[11px] font-semibold uppercase"
                             style={{ letterSpacing: "0.14em", color: yellow }}
                           >
-                            {memorial.church}
+                            {memorial.church?.trim() &&
+                            memorial.church !== "우리 가족"
+                              ? memorial.church
+                              : "포항 가족기록"}
                           </p>
                           <div className="mt-3 flex items-end justify-between gap-4">
                             <div className="min-w-0">
@@ -237,10 +292,16 @@ export default function MemorialGarden() {
                               >
                                 {memorial.name}
                               </h3>
-                              <p className="mt-1 truncate text-sm" style={{ color: muted }}>
+                              <p
+                                className="mt-1 truncate text-sm"
+                                style={{ color: muted }}
+                              >
                                 {memorial.role}
                               </p>
-                              <p className="mt-2 line-clamp-2 text-xs leading-5" style={{ color: muted }}>
+                              <p
+                                className="mt-2 line-clamp-2 text-xs leading-5"
+                                style={{ color: muted }}
+                              >
                                 {memorial.summary}
                               </p>
                             </div>
@@ -261,7 +322,10 @@ export default function MemorialGarden() {
                     >
                       <ChevronLeft className="h-4 w-4" />
                     </PageButton>
-                    {Array.from({ length: totalPages }, (_, index) => index + 1).map(number => (
+                    {Array.from(
+                      { length: totalPages },
+                      (_, index) => index + 1
+                    ).map(number => (
                       <button
                         key={number}
                         type="button"
@@ -269,7 +333,8 @@ export default function MemorialGarden() {
                         className="h-10 min-w-10 rounded-full border px-3 text-sm font-semibold transition"
                         style={{
                           borderColor: currentPage === number ? green : line,
-                          background: currentPage === number ? green : "#ffffff",
+                          background:
+                            currentPage === number ? green : "#ffffff",
                           color: currentPage === number ? "#ffffff" : ink,
                         }}
                       >
@@ -292,33 +357,55 @@ export default function MemorialGarden() {
           </div>
         </section>
 
-        <section className="border-b py-14 md:py-20" style={{ borderColor: line, background: ivory }}>
+        <section
+          className="border-b py-14 md:py-20"
+          style={{ borderColor: line, background: ivory }}
+        >
           <div className="container">
             <div className="mb-8 flex flex-col justify-between gap-5 md:flex-row md:items-end">
               <div>
-                <p className="text-[11px] font-semibold uppercase" style={{ letterSpacing: "0.18em", color: coral }}>
+                <p
+                  className="text-[11px] font-semibold uppercase"
+                  style={{ letterSpacing: "0.18em", color: coral }}
+                >
                   Functions
                 </p>
-                <h2 className="mt-4 text-3xl font-normal md:text-5xl" style={serifStyle}>
+                <h2
+                  className="mt-4 text-3xl font-normal md:text-5xl"
+                  style={serifStyle}
+                >
                   가족의 삶을 위한 기록 방식
                 </h2>
               </div>
-              <p className="max-w-md text-sm leading-7" style={{ color: muted }}>
-                인생기념관은 밝게 기록하고, 추모 기록으로 전환된 인물은 차분한 추모
-                톤과 가족의 마음글을 사용합니다.
+              <p
+                className="max-w-md text-sm leading-7"
+                style={{ color: muted }}
+              >
+                인생기념관은 살아온 시간을 밝게 정리하고, 가족이 필요한 만큼
+                사진과 문장을 계속 더할 수 있게 설계했습니다.
               </p>
             </div>
 
-            <div className="grid gap-px overflow-hidden rounded-[8px] border bg-[#e7ddc8] md:grid-cols-3" style={{ borderColor: line }}>
+            <div
+              className="grid gap-px overflow-hidden rounded-[8px] border bg-[#e7ddc8] md:grid-cols-3"
+              style={{ borderColor: line }}
+            >
               {FEATURES.map(feature => {
                 const Icon = feature.icon;
                 return (
                   <article key={feature.title} className="bg-white p-6">
-                    <Icon className="h-5 w-5" style={{ color: green }} strokeWidth={1.6} />
+                    <Icon
+                      className="h-5 w-5"
+                      style={{ color: green }}
+                      strokeWidth={1.6}
+                    />
                     <h3 className="mt-8 text-xl font-normal" style={serifStyle}>
                       {feature.title}
                     </h3>
-                    <p className="mt-4 text-sm leading-7" style={{ color: muted }}>
+                    <p
+                      className="mt-4 text-sm leading-7"
+                      style={{ color: muted }}
+                    >
                       {feature.desc}
                     </p>
                   </article>
@@ -328,23 +415,38 @@ export default function MemorialGarden() {
           </div>
         </section>
 
-        <section className="bg-[#263026] py-14 text-white md:py-20">
+        <section
+          className="border-t bg-white py-14 md:py-20"
+          style={{ borderColor: line }}
+        >
           <div className="container grid gap-8 md:grid-cols-[1fr_auto] md:items-center">
             <div>
-              <p className="text-[11px] font-semibold uppercase text-white/60" style={{ letterSpacing: "0.18em" }}>
-                Memorial Mode
+              <p
+                className="text-[11px] font-semibold uppercase"
+                style={{ letterSpacing: "0.18em", color: green }}
+              >
+                Managed Service
               </p>
-              <h2 className="mt-4 text-3xl font-normal md:text-5xl" style={serifStyle}>
-                추모 기록 전환
+              <h2
+                className="mt-4 text-3xl font-normal md:text-5xl"
+                style={serifStyle}
+              >
+                등록 후에도 계속 관리되는 가족기록
               </h2>
-              <p className="mt-5 max-w-2xl text-sm leading-7 text-white/70">
-                별세 이후에는 인생기념관을 추모 기록으로 전환해 별세일, 기일,
-                가족의 마음글을 별도로 사용할 수 있게 준비합니다.
+              <p
+                className="mt-5 max-w-2xl text-sm leading-7"
+                style={{ color: muted }}
+              >
+                처음 만든 인생기념관에 새 사진, 영상, 책 페이지, 연표를 이어서
+                추가하고 가족 비공개 공간으로 운영할 수 있습니다.
               </p>
             </div>
-            <Link href="/memorial/search">
-              <button className="inline-flex h-12 items-center justify-center gap-2 rounded-full border border-white/24 px-5 text-sm font-semibold text-white">
-                추모 기록 검색
+            <Link href="/memorial/create">
+              <button
+                className="inline-flex h-12 items-center justify-center gap-2 rounded-full border bg-white px-5 text-sm font-semibold"
+                style={{ borderColor: line, color: ink }}
+              >
+                가족기록 등록하기
                 <LockKeyhole className="h-4 w-4" />
               </button>
             </Link>

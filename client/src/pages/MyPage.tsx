@@ -44,6 +44,12 @@ const serifStyle = { fontFamily: "'Noto Serif KR', serif" } as const;
 const inputClass =
   "h-11 w-full rounded-full border border-[#e6ddcc] bg-white px-4 text-sm text-[#29251d] outline-none transition-colors placeholder:text-[#a39a8c] focus:border-[#7a835f]";
 
+const MANAGEMENT_ITEMS = [
+  "사진, 영상, 책장, 연표를 등록 후에도 계속 보완",
+  "공개 범위와 가족관 비밀번호를 가족 상황에 맞게 관리",
+  "부모님의 삶을 포항 가족들이 함께 읽는 기록으로 정돈",
+];
+
 const emptyMemorialForm: MemorialForm = {
   accessPassword: "",
   familyPassword: "",
@@ -221,7 +227,8 @@ export default function MyPage() {
               </h1>
               <p className="mt-6 max-w-2xl text-sm leading-7 text-[#6d665a]">
                 내가 만든 인생기념관을 수정하고 공개 범위, 입장 비밀번호, 가족관
-                비밀번호를 관리합니다.
+                비밀번호를 관리합니다. 한 번 등록하고 끝나는 화면이 아니라,
+                가족의 기록을 계속 보완하는 월 관리형 공간입니다.
               </p>
             </div>
 
@@ -232,6 +239,15 @@ export default function MyPage() {
               <p className="mt-2 break-all text-sm leading-6 text-[#6d665a]">
                 {user?.email || "로그인 계정"}
               </p>
+              <div className="mt-5 rounded-2xl border border-[#eee5d5] bg-white p-4">
+                <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[#7a835f]">
+                  Managed Archive
+                </p>
+                <p className="mt-3 text-sm leading-6 text-[#6d665a]">
+                  가족 요청이 생길 때마다 사진과 이야기를 더하고, 공개 상태와
+                  가족관을 안정적으로 관리합니다.
+                </p>
+              </div>
               {notice && (
                 <p className="mt-4 rounded-xl bg-white px-4 py-3 text-sm leading-6 text-[#5f6f44]">
                   {notice}
@@ -318,6 +334,8 @@ export default function MyPage() {
                 <Stat label="비공개" value={stats.private} />
                 <Stat label="가족관" value={stats.family} />
               </div>
+
+              <ManagedCarePanel />
             </aside>
 
             <section className="min-w-0">
@@ -573,7 +591,8 @@ function EmptyState() {
         아직 만든 기념관이 없습니다.
       </p>
       <p className="mx-auto mt-3 max-w-md text-sm leading-7 text-[#6d665a]">
-        가족의 사진과 이야기를 모아 첫 인생기념관을 만들어보세요.
+        가족의 사진과 이야기를 모아 첫 인생기념관을 만들어보세요. 등록 후에도
+        사진, 영상, 책장, 공개 범위를 계속 보완할 수 있습니다.
       </p>
       <Link href="/memorial/create">
         <button className="mt-6 inline-flex h-11 items-center justify-center gap-2 rounded-full bg-[#29251d] px-5 text-sm font-medium text-white transition-opacity hover:opacity-90">
@@ -581,6 +600,38 @@ function EmptyState() {
           <ArrowRight className="h-4 w-4" />
         </button>
       </Link>
+    </div>
+  );
+}
+
+function ManagedCarePanel() {
+  return (
+    <div className="rounded-2xl border border-[#e6ddcc] bg-white p-5">
+      <div className="flex items-start gap-3">
+        <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-[#edf2df] text-[#66764d]">
+          <ShieldCheck className="h-4 w-4" />
+        </span>
+        <div>
+          <p className="text-sm font-medium text-[#29251d]">
+            월 관리형으로 이어지는 기록
+          </p>
+          <p className="mt-2 text-xs leading-5 text-[#7b7468]">
+            처음 등록한 뒤에도 가족이 보내는 자료를 더하고, 공개 범위와 가족관을
+            계속 정리할 수 있게 설계되어 있습니다.
+          </p>
+        </div>
+      </div>
+      <ul className="mt-4 space-y-2">
+        {MANAGEMENT_ITEMS.map(item => (
+          <li
+            key={item}
+            className="flex gap-2 text-xs leading-5 text-[#6d665a]"
+          >
+            <span className="mt-2 h-1.5 w-1.5 shrink-0 rounded-full bg-[#d5aa55]" />
+            <span>{item}</span>
+          </li>
+        ))}
+      </ul>
     </div>
   );
 }
