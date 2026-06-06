@@ -1,19 +1,22 @@
 import type { Express } from "express";
 import express from "express";
 import { ENV } from "./env";
+import { getMountPaths } from "./basePath";
 import { UPLOAD_DIR, UPLOAD_URL_PREFIX } from "../storage";
 
 export function registerStorageProxy(app: Express) {
-  app.use(
-    UPLOAD_URL_PREFIX,
-    express.static(UPLOAD_DIR, {
-      fallthrough: false,
-      maxAge: "30d",
-      immutable: true,
-    })
-  );
+  getMountPaths(UPLOAD_URL_PREFIX).forEach(pathname => {
+    app.use(
+      pathname,
+      express.static(UPLOAD_DIR, {
+        fallthrough: false,
+        maxAge: "30d",
+        immutable: true,
+      })
+    );
+  });
 
-  app.get("/manus-storage/*", async (req, res) => {
+  const proxyHandler = async (req: express.Request, res: express.Response) => {
     const key = (req.params as unknown as Record<string, string>)[0];
     if (!key) {
       res.status(400).send("Missing storage key");
@@ -55,5 +58,9 @@ export function registerStorageProxy(app: Express) {
       console.error("[StorageProxy] failed:", err);
       res.status(502).send("Storage proxy error");
     }
+  };
+
+  getMountPaths("/manus-storage").forEach(pathname => {
+    app.get(`${pathname}/*`, proxyHandler);
   });
 }

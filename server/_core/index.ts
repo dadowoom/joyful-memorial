@@ -8,6 +8,7 @@ import { registerStorageProxy } from "./storageProxy";
 import { registerSiteAssetFallbacks } from "./siteAssets";
 import { validateRuntimeEnv } from "./env";
 import { appRouter } from "../routers";
+import { getMountPaths } from "./basePath";
 import { createContext } from "./context";
 import { serveStatic, setupVite } from "./vite";
 
@@ -42,13 +43,13 @@ async function startServer() {
   registerOAuthRoutes(app);
   registerSiteAssetFallbacks(app);
   // tRPC API
-  app.use(
-    "/api/trpc",
-    createExpressMiddleware({
-      router: appRouter,
-      createContext,
-    })
-  );
+  const trpcMiddleware = createExpressMiddleware({
+    router: appRouter,
+    createContext,
+  });
+  getMountPaths("/api/trpc").forEach(pathname => {
+    app.use(pathname, trpcMiddleware);
+  });
   // development mode uses Vite, production mode uses static files
   if (process.env.NODE_ENV === "development") {
     await setupVite(app, server);

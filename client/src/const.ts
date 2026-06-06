@@ -1,15 +1,18 @@
 export { COOKIE_NAME, ONE_YEAR_MS } from "@shared/const";
 
+import { getCurrentAppPath, stripBasePath, withBasePath } from "@/lib/basePath";
+
 export const getLoginUrl = (redirectTo?: string) => {
-  const next =
+  const rawNext =
     redirectTo ||
     (typeof window !== "undefined"
-      ? `${window.location.pathname}${window.location.search}`
+      ? getCurrentAppPath()
       : "/");
+  const next = stripBasePath(rawNext);
 
   if (!next || next === "/" || next.startsWith("/login")) {
-    return "/login";
+    return withBasePath("/login");
   }
 
-  return `/login?redirect=${encodeURIComponent(next)}`;
+  return withBasePath(`/login?redirect=${encodeURIComponent(next)}`);
 };

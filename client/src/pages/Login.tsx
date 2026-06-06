@@ -1,4 +1,5 @@
 import Navbar from "@/components/Navbar";
+import { stripBasePath } from "@/lib/basePath";
 import { trpc } from "@/lib/trpc";
 import { ArrowRight, Check, LockKeyhole, Mail, Phone, User } from "lucide-react";
 import type { ReactNode } from "react";
@@ -15,17 +16,22 @@ function getRedirectPath() {
   if (typeof window === "undefined") return "/";
   const params = new URLSearchParams(window.location.search);
   const redirect = params.get("redirect");
-  if (!redirect || !redirect.startsWith("/") || redirect.startsWith("/login")) {
+  const normalizedRedirect = stripBasePath(redirect || "");
+  if (
+    !normalizedRedirect ||
+    !normalizedRedirect.startsWith("/") ||
+    normalizedRedirect.startsWith("/login")
+  ) {
     return "/";
   }
-  return redirect;
+  return normalizedRedirect;
 }
 
 function getInitialMode(): Mode {
   if (typeof window === "undefined") return "login";
   const params = new URLSearchParams(window.location.search);
   const mode = params.get("mode");
-  const redirect = params.get("redirect");
+  const redirect = stripBasePath(params.get("redirect") || "");
 
   if (mode === "signup" || redirect === "/memorial/create") {
     return "signup";

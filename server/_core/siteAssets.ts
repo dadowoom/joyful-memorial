@@ -1,4 +1,5 @@
 import { type Express } from "express";
+import { getMountPaths } from "./basePath";
 
 const SITE_ICON_SVG = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" role="img" aria-labelledby="title desc">
   <title id="title">기쁨이 있는 곳 인생기념관</title>
@@ -17,13 +18,16 @@ const LEGACY_ICON_PATHS = [
 ];
 
 export function registerSiteAssetFallbacks(app: Express) {
-  app.get(LEGACY_ICON_PATHS, (_req, res) => {
-    res
-      .status(200)
-      .set({
-        "Cache-Control": "public, max-age=86400",
-        "Content-Type": "image/svg+xml; charset=utf-8",
-      })
-      .send(SITE_ICON_SVG);
-  });
+  app.get(
+    LEGACY_ICON_PATHS.flatMap(pathname => getMountPaths(pathname)),
+    (_req, res) => {
+      res
+        .status(200)
+        .set({
+          "Cache-Control": "public, max-age=86400",
+          "Content-Type": "image/svg+xml; charset=utf-8",
+        })
+        .send(SITE_ICON_SVG);
+    }
+  );
 }

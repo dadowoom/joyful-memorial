@@ -1,8 +1,9 @@
 import { Toaster } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
+import { APP_BASE_PATH } from "@/lib/basePath";
 import NotFound from "@/pages/NotFound";
 import { useEffect } from "react";
-import { Route, Switch, useLocation } from "wouter";
+import { Route, Router as WouterRouter, Switch, useLocation } from "wouter";
 import ErrorBoundary from "./components/ErrorBoundary";
 import { ThemeProvider } from "./contexts/ThemeContext";
 import Home from "./pages/Home";
@@ -18,7 +19,7 @@ import MemorialArchivePage from "./pages/MemorialArchivePage";
 import MemorialFamilyPage from "./pages/MemorialFamilyPage";
 import MemorialEdit from "./pages/MemorialEdit";
 
-function Router() {
+function AppRoutes() {
   // make sure to consider if you need authentication for certain routes
   return (
     <Switch>
@@ -78,8 +79,10 @@ function App() {
       >
         <TooltipProvider>
           <Toaster />
-          <ScrollToRouteTop />
-          <Router />
+          <WouterRouter base={APP_BASE_PATH}>
+            <ScrollToRouteTop />
+            <AppRoutes />
+          </WouterRouter>
         </TooltipProvider>
       </ThemeProvider>
     </ErrorBoundary>
