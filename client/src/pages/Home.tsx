@@ -1,5 +1,6 @@
 import Footer from "@/components/Footer";
 import Navbar from "@/components/Navbar";
+import { withBasePath } from "@/lib/basePath";
 import { trpc } from "@/lib/trpc";
 import {
   ArrowRight,
@@ -131,7 +132,7 @@ export default function Home() {
         >
           <div className="absolute inset-0 md:left-[42%]">
             <img
-              src="/joyful-memorial-hero.png"
+              src={withBasePath("/joyful-memorial-hero.png")}
               alt=""
               className="h-full w-full object-cover object-center"
             />
