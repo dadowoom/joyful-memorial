@@ -550,7 +550,11 @@ export default function MemorialCreate() {
     if (!file) return;
 
     setPortraitPhoto({
-      ...(await compressImageFile(file, { maxBytes: 2_500_000 })),
+      ...(await compressImageFile(file, {
+        maxBytes: 2_500_000,
+        maxDimension: 1500,
+        cropAspectRatio: 4 / 5,
+      })),
       caption: "대표 사진",
     });
     setSubmitted(false);
@@ -1435,6 +1439,10 @@ export default function MemorialCreate() {
                 <div className="grid gap-6 lg:grid-cols-[280px_minmax(0,1fr)]">
                   <div>
                     <label className={labelClass}>대표 사진</label>
+                    <p className="mb-3 text-xs leading-5 text-[#8a8172]">
+                      권장 크기 1200 x 1500px 이상, 비율 4:5입니다. 업로드하면
+                      대표사진 프레임에 맞춰 중앙 기준으로 자동 크롭됩니다.
+                    </p>
                     <label className="flex aspect-[4/5] w-full flex-col items-center justify-center border border-dashed border-[#dbdad7] bg-[#fafafa] text-center text-sm text-[#616161] transition-colors hover:border-[#18181b] hover:text-[#121212]">
                       {portraitPhoto ? (
                         <img

@@ -6,6 +6,7 @@ const QUALITY_STEP = 0.08;
 type CompressOptions = {
   maxBytes?: number;
   maxDimension?: number;
+  cropAspectRatio?: number;
 };
 
 export type CompressedImage = {
@@ -85,6 +86,7 @@ export async function compressImageFile(
   }
 
   if (
+    !options.cropAspectRatio &&
     file.size <= maxBytes &&
     ["image/jpeg", "image/png", "image/webp", "image/gif"].includes(file.type)
   ) {
@@ -98,19 +100,43 @@ export async function compressImageFile(
   }
 
   const image = await loadImage(file);
-  const scale = Math.min(
-    1,
-    maxDimension / Math.max(image.naturalWidth, image.naturalHeight)
-  );
-  const width = Math.max(1, Math.round(image.naturalWidth * scale));
-  const height = Math.max(1, Math.round(image.naturalHeight * scale));
+  const cropAspectRatio = options.cropAspectRatio;
+  let sourceX = 0;
+  let sourceY = 0;
+  let sourceWidth = image.naturalWidth;
+  let sourceHeight = image.naturalHeight;
+
+  if (cropAspectRatio && cropAspectRatio > 0) {
+    const sourceAspectRatio = image.naturalWidth / image.naturalHeight;
+    if (sourceAspectRatio > cropAspectRatio) {
+      sourceWidth = Math.round(image.naturalHeight * cropAspectRatio);
+      sourceX = Math.round((image.naturalWidth - sourceWidth) / 2);
+    } else {
+      sourceHeight = Math.round(image.naturalWidth / cropAspectRatio);
+      sourceY = Math.round((image.naturalHeight - sourceHeight) / 2);
+    }
+  }
+
+  const scale = Math.min(1, maxDimension / Math.max(sourceWidth, sourceHeight));
+  const width = Math.max(1, Math.round(sourceWidth * scale));
+  const height = Math.max(1, Math.round(sourceHeight * scale));
   const canvas = document.createElement("canvas");
   canvas.width = width;
   canvas.height = height;
 
   const context = canvas.getContext("2d");
   if (!context) throw new Error("이미지 압축을 준비할 수 없습니다.");
-  context.drawImage(image, 0, 0, width, height);
+  context.drawImage(
+    image,
+    sourceX,
+    sourceY,
+    sourceWidth,
+    sourceHeight,
+    0,
+    0,
+    width,
+    height
+  );
 
   let outputType =
     file.type === "image/png" && file.size <= maxBytes * 1.5
@@ -142,7 +168,17 @@ export async function compressImageFile(
     smallerCanvas.height = currentHeight;
     const smallerContext = smallerCanvas.getContext("2d");
     if (!smallerContext) throw new Error("이미지 압축을 준비할 수 없습니다.");
-    smallerContext.drawImage(image, 0, 0, currentWidth, currentHeight);
+    smallerContext.drawImage(
+      image,
+      sourceX,
+      sourceY,
+      sourceWidth,
+      sourceHeight,
+      0,
+      0,
+      currentWidth,
+      currentHeight
+    );
     blob = await canvasToBlob(smallerCanvas, outputType, 0.78);
   }
 

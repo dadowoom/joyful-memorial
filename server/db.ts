@@ -1131,6 +1131,18 @@ export async function createMemorialGalleryPhoto(
   await db.insert(memorialGalleryPhotos).values(data);
 }
 
+export async function clearRepresentativeMemorialPhotos(memorialId: number) {
+  const db = await getDb();
+  if (!db) {
+    throw new Error("Database is not available");
+  }
+
+  await db
+    .update(memorialGalleryPhotos)
+    .set({ isRepresentative: 0 })
+    .where(eq(memorialGalleryPhotos.memorialId, memorialId));
+}
+
 export async function updateMemorialGalleryPhoto(
   id: number,
   data: Partial<InsertMemorialGalleryPhoto>

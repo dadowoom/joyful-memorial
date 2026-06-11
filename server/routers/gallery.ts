@@ -3,6 +3,7 @@ import { nanoid } from "nanoid";
 import { TRPCError } from "@trpc/server";
 import {
   canReadMemorial,
+  clearRepresentativeMemorialPhotos,
   createMemorialGalleryPhoto,
   deleteMemorialGalleryPhoto,
   getAdminMemorialById,
@@ -99,6 +100,7 @@ export const galleryRouter = router({
         caption: z.string().max(500).optional(),
         year: z.string().max(20).optional(),
         sortOrder: z.number().optional(),
+        isRepresentative: z.boolean().optional(),
       })
     )
     .mutation(async ({ ctx, input }) => {
@@ -107,6 +109,10 @@ export const galleryRouter = router({
       const key = `gallery/${input.memorialId}/${nanoid()}.${ext}`;
       const { url } = await storagePut(key, buffer, mimeType);
 
+      if (input.isRepresentative) {
+        await clearRepresentativeMemorialPhotos(input.memorialId);
+      }
+
       await createMemorialGalleryPhoto({
         memorialId: input.memorialId,
         photoUrl: url,
@@ -114,7 +120,7 @@ export const galleryRouter = router({
         caption: input.caption || null,
         year: input.year || null,
         sortOrder: input.sortOrder ?? 0,
-        isRepresentative: 0,
+        isRepresentative: input.isRepresentative ? 1 : 0,
       });
 
       return { success: true, url, key };

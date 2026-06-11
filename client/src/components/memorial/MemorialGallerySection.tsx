@@ -3,6 +3,7 @@ import { compressImageFile } from "@/lib/imageCompression";
 import { toImgUrl } from "@/lib/imageUrl";
 import { trpc } from "@/lib/trpc";
 import {
+  Camera,
   ChevronLeft,
   ChevronRight,
   ImagePlus,
@@ -11,7 +12,7 @@ import {
   Upload,
   X,
 } from "lucide-react";
-import type { ReactNode } from "react";
+import type { ChangeEvent, ReactNode } from "react";
 import { useRef, useState } from "react";
 import { toast } from "sonner";
 
@@ -41,6 +42,7 @@ export default function MemorialGallerySection({
 }: MemorialGallerySectionProps) {
   const utils = trpc.useUtils();
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const representativeInputRef = useRef<HTMLInputElement>(null);
   const [lightboxIndex, setLightboxIndex] = useState<number | null>(null);
   const [dragging, setDragging] = useState(false);
   const [uploading, setUploading] = useState(false);
@@ -49,27 +51,83 @@ export default function MemorialGallerySection({
   const photosQueryInput = { memorialId, accessToken };
   const photosQuery = trpc.gallery.listByMemorial.useQuery(photosQueryInput);
   const photos = (photosQuery.data ?? []) as GalleryPhoto[];
+  const representativePhoto =
+    photos.find(photo => photo.isRepresentative === 1) ?? photos[0] ?? null;
   const canEdit = isAdmin && memorialId > 0;
+
+  const invalidatePhotoViews = async () => {
+    await Promise.all([
+      utils.gallery.listByMemorial.invalidate(photosQueryInput),
+      utils.memorial.list.invalidate(),
+      utils.memorial.myList.invalidate(),
+      utils.memorial.adminList.invalidate(),
+    ]);
+  };
 
   const uploadPhoto = trpc.gallery.upload.useMutation();
   const updatePhoto = trpc.gallery.update.useMutation({
-    onSuccess: () => utils.gallery.listByMemorial.invalidate(photosQueryInput),
+    onSuccess: () => invalidatePhotoViews(),
     onError: error => toast.error(error.message),
   });
   const deletePhoto = trpc.gallery.delete.useMutation({
-    onSuccess: () => {
+    onSuccess: async () => {
       toast.success("사진이 삭제되었습니다.");
-      utils.gallery.listByMemorial.invalidate(photosQueryInput);
+      await invalidatePhotoViews();
     },
     onError: error => toast.error(error.message),
   });
   const setRepresentative = trpc.gallery.setRepresentative.useMutation({
-    onSuccess: () => {
+    onSuccess: async () => {
       toast.success("대표사진으로 지정했습니다.");
-      utils.gallery.listByMemorial.invalidate(photosQueryInput);
+      await invalidatePhotoViews();
     },
     onError: error => toast.error(error.message),
   });
+
+  const uploadRepresentativePhoto = async (file: File) => {
+    if (!canEdit) return;
+    if (!file.type.startsWith("image/")) {
+      toast.error("이미지 파일만 업로드할 수 있습니다.");
+      return;
+    }
+
+    setUploading(true);
+    setProgress(20);
+    try {
+      const compressed = await compressImageFile(file, {
+        maxBytes: 2_500_000,
+        maxDimension: 1500,
+        cropAspectRatio: 4 / 5,
+      });
+      setProgress(70);
+      await uploadPhoto.mutateAsync({
+        memorialId,
+        dataUrl: compressed.dataUrl,
+        fileName: compressed.fileName,
+        caption: "대표 사진",
+        sortOrder: 0,
+        isRepresentative: true,
+      });
+      setProgress(100);
+      await invalidatePhotoViews();
+      toast.success("대표사진이 교체되었습니다.");
+    } catch (error) {
+      toast.error(
+        error instanceof Error
+          ? error.message
+          : "대표사진 업로드에 실패했습니다."
+      );
+    } finally {
+      setUploading(false);
+      setProgress(0);
+    }
+  };
+
+  const handleRepresentativeChange = (event: ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    event.target.value = "";
+    if (file) uploadRepresentativePhoto(file);
+  };
 
   const processFiles = async (files: File[]) => {
     if (!canEdit || files.length === 0) return;
@@ -93,6 +151,7 @@ export default function MemorialGallerySection({
             dataUrl: compressed.dataUrl,
             fileName: compressed.fileName,
             sortOrder: photos.length + index,
+            isRepresentative: photos.length === 0 && index === 0,
           });
           successCount += 1;
         } catch {
@@ -138,8 +197,7 @@ export default function MemorialGallerySection({
       id="gallery"
       className="relative overflow-hidden py-20 md:py-32"
       style={{
-        background:
-          "linear-gradient(180deg, #ffffff, #fbfaf8, #ffffff)",
+        background: "linear-gradient(180deg, #ffffff, #fbfaf8, #ffffff)",
       }}
       onDragOver={event => {
         event.preventDefault();
@@ -168,18 +226,59 @@ export default function MemorialGallerySection({
         />
 
         {canEdit && (
-          <div className="mb-8 text-center">
+          <div className="mb-8 grid gap-4 border border-[#e6ded1] bg-white/90 p-4 md:grid-cols-[112px_minmax(0,1fr)_auto] md:items-center md:p-5">
             <button
               type="button"
-              onClick={() => fileInputRef.current?.click()}
-              className="inline-flex h-11 items-center justify-center gap-2 border border-dashed border-[#c8b383] bg-white px-5 text-sm font-medium text-[#4f4638] transition-colors hover:bg-[#faf9f7]"
+              onClick={() => representativeInputRef.current?.click()}
+              className="mx-auto flex aspect-[4/5] w-28 items-center justify-center overflow-hidden border border-[#e6ded1] bg-[#faf9f7] text-[#7a674a] md:mx-0"
+              aria-label="대표사진 교체"
             >
-              <ImagePlus className="h-4 w-4" />
-              사진 추가
+              {representativePhoto ? (
+                <img
+                  src={toImgUrl(representativePhoto.photoUrl)}
+                  alt="현재 대표사진"
+                  className="h-full w-full object-cover"
+                  style={{ filter: memorialPhotoFilter }}
+                />
+              ) : (
+                <Camera className="h-6 w-6" strokeWidth={1.5} />
+              )}
             </button>
-            <p className="mt-2 text-xs text-[#6f6a61]">
-              여러 장을 한 번에 선택하거나 이 영역으로 끌어오세요.
-            </p>
+
+            <div className="text-center md:text-left">
+              <p className="text-sm font-medium text-[#2e2218]">대표사진</p>
+              <p className="mt-1 text-xs leading-6 text-[#6f6a61]">
+                권장 크기 1200 x 1500px 이상, 비율 4:5입니다. 업로드하면 이
+                프레임에 맞춰 중앙 기준으로 자동 크롭됩니다.
+              </p>
+            </div>
+
+            <div className="flex flex-col gap-2 sm:flex-row md:flex-col">
+              <button
+                type="button"
+                onClick={() => representativeInputRef.current?.click()}
+                className="inline-flex h-11 items-center justify-center gap-2 bg-[#1f1d1a] px-5 text-sm font-medium text-white transition-colors hover:bg-[#33302b]"
+              >
+                <Camera className="h-4 w-4" />
+                대표사진 교체
+              </button>
+              <button
+                type="button"
+                onClick={() => fileInputRef.current?.click()}
+                className="inline-flex h-11 items-center justify-center gap-2 border border-dashed border-[#c8b383] bg-white px-5 text-sm font-medium text-[#4f4638] transition-colors hover:bg-[#faf9f7]"
+              >
+                <ImagePlus className="h-4 w-4" />
+                사진 추가
+              </button>
+            </div>
+
+            <input
+              ref={representativeInputRef}
+              type="file"
+              accept="image/*"
+              className="hidden"
+              onChange={handleRepresentativeChange}
+            />
             <input
               ref={fileInputRef}
               type="file"
@@ -212,7 +311,9 @@ export default function MemorialGallerySection({
                   style={{ width: `${progress}%` }}
                 />
               </div>
-              <p className="mt-3 text-sm text-[#6f5123]">업로드 중 {progress}%</p>
+              <p className="mt-3 text-sm text-[#6f5123]">
+                업로드 중 {progress}%
+              </p>
             </div>
           </div>
         )}
@@ -224,11 +325,11 @@ export default function MemorialGallerySection({
             {photos.map((photo, index) => (
               <article
                 key={photo.id}
-                  className="group relative overflow-hidden bg-white shadow-[0_10px_30px_rgba(31,29,26,0.05)]"
-                  style={{
-                    gridRow: index % 5 === 0 ? "span 2" : "span 1",
-                    border: "1px solid #e6ded1",
-                  }}
+                className="group relative overflow-hidden bg-white shadow-[0_10px_30px_rgba(31,29,26,0.05)]"
+                style={{
+                  gridRow: index % 5 === 0 ? "span 2" : "span 1",
+                  border: "1px solid #e6ded1",
+                }}
               >
                 <button
                   type="button"
@@ -242,7 +343,9 @@ export default function MemorialGallerySection({
                     style={{ filter: memorialPhotoFilter }}
                   />
                   <span className="absolute inset-0 bg-gradient-to-t from-[#6f5123]/0 via-transparent to-transparent opacity-0 transition-opacity duration-500 group-hover:opacity-100 group-hover:from-[#6f5123]/75" />
-                  {(photo.caption || photo.year || photo.isRepresentative === 1) && (
+                  {(photo.caption ||
+                    photo.year ||
+                    photo.isRepresentative === 1) && (
                     <span className="absolute bottom-0 left-0 right-0 translate-y-0 bg-gradient-to-t from-[#6f5123]/80 to-transparent p-4 text-white transition-transform duration-500 md:translate-y-full md:group-hover:translate-y-0">
                       {photo.isRepresentative === 1 && (
                         <span className="mb-2 inline-flex items-center gap-1 text-[11px]">
@@ -344,7 +447,9 @@ export default function MemorialGallerySection({
           photos={photos}
           index={lightboxIndex}
           onClose={() => setLightboxIndex(null)}
-          onPrev={() => setLightboxIndex(value => Math.max(0, (value ?? 0) - 1))}
+          onPrev={() =>
+            setLightboxIndex(value => Math.max(0, (value ?? 0) - 1))
+          }
           onNext={() =>
             setLightboxIndex(value =>
               Math.min(photos.length - 1, (value ?? 0) + 1)
@@ -420,8 +525,12 @@ function Lightbox({
         />
         {(photo.caption || photo.year) && (
           <div className="border-t border-[#e6ded1] bg-white px-5 py-4 text-center">
-            {photo.caption && <p className="text-sm text-[#2e2218]">{photo.caption}</p>}
-            {photo.year && <p className="mt-1 text-xs text-[#7a674a]">{photo.year}</p>}
+            {photo.caption && (
+              <p className="text-sm text-[#2e2218]">{photo.caption}</p>
+            )}
+            {photo.year && (
+              <p className="mt-1 text-xs text-[#7a674a]">{photo.year}</p>
+            )}
           </div>
         )}
       </div>
