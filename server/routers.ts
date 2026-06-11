@@ -10,6 +10,7 @@ import {
   createMemorialGalleryPhoto,
   createMemorialLetter,
   createLocalUser,
+  createMemorialVideo,
   createMemorialReminderSubscription,
   canReadMemorial,
   deleteMemorial,
@@ -114,6 +115,23 @@ const memorialCreateInput = z.object({
       })
     )
     .max(25)
+    .default([]),
+  videos: z
+    .array(
+      z.object({
+        title: z.string().trim().max(300).optional(),
+        description: z.string().trim().max(2000).optional(),
+        youtubeVideoId: z
+          .string()
+          .trim()
+          .regex(/^[a-zA-Z0-9_-]{11}$/, {
+            message: "유효한 유튜브 영상 ID를 입력해주세요.",
+          }),
+        isVisible: z.boolean().optional(),
+        sortOrder: z.number().optional(),
+      })
+    )
+    .max(20)
     .default([]),
   bookPages: z.array(bookPageCreateInput).max(80).default([]),
   books: z
@@ -692,6 +710,19 @@ export const appRouter = router({
               isRepresentative: photo.isRepresentative ? 1 : 0,
             });
           })
+        );
+
+        await Promise.all(
+          input.videos.map((video, index) =>
+            createMemorialVideo({
+              memorialId: created.id,
+              title: video.title?.trim() || `영상 ${index + 1}`,
+              description: video.description?.trim() || null,
+              youtubeVideoId: video.youtubeVideoId,
+              isVisible: video.isVisible === false ? 0 : 1,
+              sortOrder: video.sortOrder ?? index,
+            })
+          )
         );
 
         const hasBookPageContent = (page: (typeof input.bookPages)[number]) =>

@@ -45,6 +45,12 @@ type BookDraft = {
   pages: TimelineItem[];
 };
 
+type VideoDraft = {
+  id: string;
+  title: string;
+  url: string;
+};
+
 type Visibility = "public" | "private";
 
 type MemorialForm = {
@@ -167,6 +173,7 @@ const errorClass = "mt-2 text-xs text-[#9f2a2a]";
 const MAX_GALLERY_PHOTOS = 24;
 const GALLERY_PHOTO_MAX_BYTES = 1_200_000;
 const GALLERY_PHOTO_MAX_DIMENSION = 1800;
+const MAX_CREATE_VIDEOS = 10;
 
 const makeId = () => {
   const nativeUuid = globalThis.crypto?.randomUUID;
@@ -196,6 +203,12 @@ const makeBookDraft = (index = 1): BookDraft => ({
   pages: [makeTimelineItem(), makeTimelineItem()],
 });
 
+const makeVideoDraft = (): VideoDraft => ({
+  id: makeId(),
+  title: "",
+  url: "",
+});
+
 const sanitizeSlug = (value: string) =>
   value
     .toLowerCase()
@@ -210,6 +223,24 @@ const toBookPageYear = (year: string) => {
   return match ? Number(match[0]) : undefined;
 };
 
+const extractYoutubeId = (input: string) => {
+  const trimmed = input.trim();
+  if (/^[a-zA-Z0-9_-]{11}$/.test(trimmed)) return trimmed;
+  const patterns = [
+    /youtu\.be\/([a-zA-Z0-9_-]{11})/,
+    /[?&]v=([a-zA-Z0-9_-]{11})/,
+    /embed\/([a-zA-Z0-9_-]{11})/,
+    /shorts\/([a-zA-Z0-9_-]{11})/,
+  ];
+  for (const pattern of patterns) {
+    const match = trimmed.match(pattern);
+    if (match?.[1]) return match[1];
+  }
+  return trimmed;
+};
+
+const isValidYoutubeId = (value: string) => /^[a-zA-Z0-9_-]{11}$/.test(value);
+
 export default function MemorialCreate() {
   const [, setLocation] = useLocation();
   const { user, loading } = useAuth({
@@ -217,6 +248,7 @@ export default function MemorialCreate() {
   });
   const [form, setForm] = useState<MemorialForm>(initialForm);
   const [books, setBooks] = useState<BookDraft[]>(() => [makeBookDraft(1)]);
+  const [videos, setVideos] = useState<VideoDraft[]>(() => [makeVideoDraft()]);
   const [activeBookIndex, setActiveBookIndex] = useState(0);
   const [activePageIndex, setActivePageIndex] = useState(0);
   const [portraitPhoto, setPortraitPhoto] = useState<SelectedPhoto | null>(
@@ -240,6 +272,7 @@ export default function MemorialCreate() {
       const parsed = JSON.parse(saved) as {
         form?: Partial<MemorialForm>;
         books?: BookDraft[];
+        videos?: VideoDraft[];
         timeline?: TimelineItem[];
       };
 
@@ -284,6 +317,16 @@ export default function MemorialCreate() {
             })),
           },
         ]);
+      }
+
+      if (Array.isArray(parsed.videos) && parsed.videos.length > 0) {
+        setVideos(
+          parsed.videos.slice(0, MAX_CREATE_VIDEOS).map(video => ({
+            id: video.id || makeId(),
+            title: video.title || "",
+            url: video.url || "",
+          }))
+        );
       }
     } catch {
       localStorage.removeItem(draftKey);
@@ -563,6 +606,37 @@ export default function MemorialCreate() {
     setCreatedMemorial(null);
   };
 
+  const addVideoDraft = () => {
+    if (videos.length >= MAX_CREATE_VIDEOS) {
+      setNotice(`영상은 최대 ${MAX_CREATE_VIDEOS}개까지 등록할 수 있습니다.`);
+      return;
+    }
+
+    setVideos(current => [...current, makeVideoDraft()]);
+    setSubmitted(false);
+    setCreatedMemorial(null);
+  };
+
+  const updateVideoDraft = (
+    id: string,
+    field: "title" | "url",
+    value: string
+  ) => {
+    setVideos(current =>
+      current.map(video =>
+        video.id === id ? { ...video, [field]: value } : video
+      )
+    );
+    setSubmitted(false);
+    setCreatedMemorial(null);
+  };
+
+  const removeVideoDraft = (id: string) => {
+    setVideos(current => current.filter(video => video.id !== id));
+    setSubmitted(false);
+    setCreatedMemorial(null);
+  };
+
   const saveDraft = () => {
     localStorage.setItem(
       draftKey,
@@ -572,6 +646,7 @@ export default function MemorialCreate() {
           ...book,
           pages: book.pages.map(({ photo: _photo, ...item }) => item),
         })),
+        videos,
         timeline: allBookPages.map(({ photo: _photo, ...item }) => item),
       })
     );
@@ -617,6 +692,29 @@ export default function MemorialCreate() {
     }
 
     try {
+      const videoPayload = videos
+        .map((video, index) => {
+          const youtubeVideoId = extractYoutubeId(video.url);
+          return {
+            title: video.title.trim() || `영상 ${index + 1}`,
+            youtubeVideoId,
+            sortOrder: index,
+            hasInput: Boolean(video.title.trim() || video.url.trim()),
+          };
+        })
+        .filter(video => video.hasInput);
+
+      const invalidVideo = videoPayload.find(
+        video => !isValidYoutubeId(video.youtubeVideoId)
+      );
+      if (invalidVideo) {
+        setNotice("영상에는 유효한 유튜브 주소 또는 영상 ID를 입력해 주세요.");
+        document
+          .getElementById("videos")
+          ?.scrollIntoView({ behavior: "smooth", block: "start" });
+        return;
+      }
+
       setNotice("인생기념관을 생성하고 있습니다.");
       const created = await createMemorialMutation.mutateAsync({
         ...form,
@@ -669,6 +767,7 @@ export default function MemorialCreate() {
             isRepresentative: false,
           })),
         ],
+        videos: videoPayload.map(({ hasInput: _hasInput, ...video }) => video),
       });
 
       localStorage.removeItem(draftKey);
@@ -839,6 +938,12 @@ export default function MemorialCreate() {
                     className="block transition-colors hover:text-[#121212]"
                   >
                     사진
+                  </a>
+                  <a
+                    href="#videos"
+                    className="block transition-colors hover:text-[#121212]"
+                  >
+                    영상
                   </a>
                   <a
                     href="#settings"
@@ -1425,10 +1530,112 @@ export default function MemorialCreate() {
               </section>
 
               <section
+                id="videos"
+                className="scroll-mt-24 border border-[#dbdad7] p-5 md:p-8"
+              >
+                <SectionHeader number="05" title="영상" />
+
+                <div className="grid gap-6 lg:grid-cols-[260px_minmax(0,1fr)]">
+                  <div>
+                    <Video
+                      className="h-7 w-7 text-[#7b8a61]"
+                      strokeWidth={1.5}
+                    />
+                    <p className="mt-5 text-sm leading-7 text-[#616161]">
+                      유튜브 링크를 넣으면 기념관의 영상 기록 섹션에서 바로
+                      재생할 수 있습니다. 여러 개를 등록해 가족 행사, 인터뷰,
+                      추억 영상을 함께 남길 수 있습니다.
+                    </p>
+                    <p className="mt-3 text-xs leading-6 text-[#8a8172]">
+                      예: youtube.com/watch?v=..., youtu.be/..., shorts 링크,
+                      영상 ID
+                    </p>
+                  </div>
+
+                  <div className="space-y-3">
+                    {videos.map((video, index) => {
+                      const youtubeVideoId = extractYoutubeId(video.url);
+                      const hasValidThumb = isValidYoutubeId(youtubeVideoId);
+
+                      return (
+                        <div
+                          key={video.id}
+                          className="grid gap-4 border border-[#dbdad7] bg-white p-4 md:grid-cols-[120px_minmax(0,1fr)_auto]"
+                        >
+                          <div className="flex aspect-video items-center justify-center overflow-hidden bg-[#f6f5f2] text-xs text-[#8a8172] md:aspect-square">
+                            {hasValidThumb ? (
+                              <img
+                                src={`https://img.youtube.com/vi/${youtubeVideoId}/mqdefault.jpg`}
+                                alt={`영상 ${index + 1} 미리보기`}
+                                className="h-full w-full object-cover"
+                              />
+                            ) : (
+                              <Video className="h-5 w-5" strokeWidth={1.5} />
+                            )}
+                          </div>
+
+                          <div className="grid gap-3">
+                            <input
+                              className={inputClass}
+                              value={video.title}
+                              onChange={event =>
+                                updateVideoDraft(
+                                  video.id,
+                                  "title",
+                                  event.target.value
+                                )
+                              }
+                              placeholder={`영상 제목 ${index + 1} (선택)`}
+                            />
+                            <input
+                              className={inputClass}
+                              value={video.url}
+                              onChange={event =>
+                                updateVideoDraft(
+                                  video.id,
+                                  "url",
+                                  event.target.value
+                                )
+                              }
+                              placeholder="유튜브 주소 또는 영상 ID"
+                            />
+                            {video.url.trim() && !hasValidThumb && (
+                              <p className="text-xs text-[#9f2a2a]">
+                                유튜브 주소 또는 11자리 영상 ID를 확인해 주세요.
+                              </p>
+                            )}
+                          </div>
+
+                          <button
+                            type="button"
+                            onClick={() => removeVideoDraft(video.id)}
+                            className="inline-flex h-10 items-center justify-center gap-2 px-2 text-sm text-[#616161] transition-colors hover:text-[#121212]"
+                          >
+                            <Trash2 className="h-4 w-4" strokeWidth={1.6} />
+                            삭제
+                          </button>
+                        </div>
+                      );
+                    })}
+
+                    <button
+                      type="button"
+                      onClick={addVideoDraft}
+                      disabled={videos.length >= MAX_CREATE_VIDEOS}
+                      className="inline-flex h-11 items-center justify-center gap-2 border border-[#dbdad7] bg-white px-4 text-sm text-[#121212] transition-colors hover:bg-[#f6f5f2] disabled:cursor-not-allowed disabled:opacity-45"
+                    >
+                      <Plus className="h-4 w-4" strokeWidth={1.6} />
+                      유튜브 영상 추가
+                    </button>
+                  </div>
+                </div>
+              </section>
+
+              <section
                 id="settings"
                 className="scroll-mt-24 border border-[#dbdad7] p-5 md:p-8"
               >
-                <SectionHeader number="05" title="공개 설정" />
+                <SectionHeader number="06" title="공개 설정" />
 
                 <div className="grid gap-6 md:grid-cols-2">
                   <Field label="공개 범위">
