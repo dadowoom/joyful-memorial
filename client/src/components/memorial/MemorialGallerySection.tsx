@@ -1,5 +1,6 @@
 import InlineEditText from "@/components/InlineEditText";
-import { compressImageFile } from "@/lib/imageCompression";
+import ImageCropModal from "@/components/ImageCropModal";
+import { compressImageFile, type ImageCropRect } from "@/lib/imageCompression";
 import { toImgUrl } from "@/lib/imageUrl";
 import { trpc } from "@/lib/trpc";
 import {
@@ -47,6 +48,8 @@ export default function MemorialGallerySection({
   const [dragging, setDragging] = useState(false);
   const [uploading, setUploading] = useState(false);
   const [progress, setProgress] = useState(0);
+  const [representativeCropFile, setRepresentativeCropFile] =
+    useState<File | null>(null);
 
   const photosQueryInput = { memorialId, accessToken };
   const photosQuery = trpc.gallery.listByMemorial.useQuery(photosQueryInput);
@@ -84,7 +87,10 @@ export default function MemorialGallerySection({
     onError: error => toast.error(error.message),
   });
 
-  const uploadRepresentativePhoto = async (file: File) => {
+  const uploadRepresentativePhoto = async (
+    file: File,
+    cropRect?: ImageCropRect
+  ) => {
     if (!canEdit) return;
     if (!file.type.startsWith("image/")) {
       toast.error("이미지 파일만 업로드할 수 있습니다.");
@@ -97,7 +103,7 @@ export default function MemorialGallerySection({
       const compressed = await compressImageFile(file, {
         maxBytes: 2_500_000,
         maxDimension: 1500,
-        cropAspectRatio: 4 / 5,
+        ...(cropRect ? { cropRect } : { cropAspectRatio: 4 / 5 }),
       });
       setProgress(70);
       await uploadPhoto.mutateAsync({
@@ -120,13 +126,14 @@ export default function MemorialGallerySection({
     } finally {
       setUploading(false);
       setProgress(0);
+      setRepresentativeCropFile(null);
     }
   };
 
   const handleRepresentativeChange = (event: ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     event.target.value = "";
-    if (file) uploadRepresentativePhoto(file);
+    if (file) setRepresentativeCropFile(file);
   };
 
   const processFiles = async (files: File[]) => {
@@ -160,7 +167,7 @@ export default function MemorialGallerySection({
         setProgress(Math.round(((index + 1) / imageFiles.length) * 100));
       }
 
-      await utils.gallery.listByMemorial.invalidate(photosQueryInput);
+      await invalidatePhotoViews();
       if (successCount > 0) {
         toast.success(`${successCount}장의 사진이 업로드되었습니다.`);
       }
@@ -454,6 +461,17 @@ export default function MemorialGallerySection({
             setLightboxIndex(value =>
               Math.min(photos.length - 1, (value ?? 0) + 1)
             )
+          }
+        />
+      )}
+      {representativeCropFile && (
+        <ImageCropModal
+          file={representativeCropFile}
+          aspectRatio={4 / 5}
+          title="대표사진 위치 맞추기"
+          onCancel={() => setRepresentativeCropFile(null)}
+          onConfirm={cropRect =>
+            uploadRepresentativePhoto(representativeCropFile, cropRect)
           }
         />
       )}

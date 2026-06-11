@@ -7,6 +7,7 @@ type CompressOptions = {
   maxBytes?: number;
   maxDimension?: number;
   cropAspectRatio?: number;
+  cropRect?: ImageCropRect;
 };
 
 export type CompressedImage = {
@@ -15,6 +16,13 @@ export type CompressedImage = {
   compressed: boolean;
   originalBytes: number;
   outputBytes: number;
+};
+
+export type ImageCropRect = {
+  x: number;
+  y: number;
+  width: number;
+  height: number;
 };
 
 function readBlobAsDataUrl(blob: Blob): Promise<string> {
@@ -74,6 +82,9 @@ function replaceExtension(fileName: string, ext: string) {
   return `${base || "image"}.${ext}`;
 }
 
+const clamp = (value: number, min: number, max: number) =>
+  Math.min(max, Math.max(min, value));
+
 export async function compressImageFile(
   file: File,
   options: CompressOptions = {}
@@ -86,6 +97,7 @@ export async function compressImageFile(
   }
 
   if (
+    !options.cropRect &&
     !options.cropAspectRatio &&
     file.size <= maxBytes &&
     ["image/jpeg", "image/png", "image/webp", "image/gif"].includes(file.type)
@@ -106,7 +118,20 @@ export async function compressImageFile(
   let sourceWidth = image.naturalWidth;
   let sourceHeight = image.naturalHeight;
 
-  if (cropAspectRatio && cropAspectRatio > 0) {
+  if (options.cropRect) {
+    sourceX = clamp(Math.round(options.cropRect.x), 0, image.naturalWidth - 1);
+    sourceY = clamp(Math.round(options.cropRect.y), 0, image.naturalHeight - 1);
+    sourceWidth = clamp(
+      Math.round(options.cropRect.width),
+      1,
+      image.naturalWidth - sourceX
+    );
+    sourceHeight = clamp(
+      Math.round(options.cropRect.height),
+      1,
+      image.naturalHeight - sourceY
+    );
+  } else if (cropAspectRatio && cropAspectRatio > 0) {
     const sourceAspectRatio = image.naturalWidth / image.naturalHeight;
     if (sourceAspectRatio > cropAspectRatio) {
       sourceWidth = Math.round(image.naturalHeight * cropAspectRatio);

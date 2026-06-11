@@ -1,9 +1,11 @@
 import { useAuth } from "@/_core/hooks/useAuth";
 import Footer from "@/components/Footer";
+import ImageCropModal from "@/components/ImageCropModal";
 import Navbar from "@/components/Navbar";
 import {
   compressImageFile,
   type CompressedImage,
+  type ImageCropRect,
 } from "@/lib/imageCompression";
 import { trpc } from "@/lib/trpc";
 import {
@@ -254,6 +256,7 @@ export default function MemorialCreate() {
   const [portraitPhoto, setPortraitPhoto] = useState<SelectedPhoto | null>(
     null
   );
+  const [portraitCropFile, setPortraitCropFile] = useState<File | null>(null);
   const [galleryPhotos, setGalleryPhotos] = useState<SelectedPhoto[]>([]);
   const [errors, setErrors] = useState<
     Partial<Record<keyof MemorialForm, string>>
@@ -545,18 +548,24 @@ export default function MemorialCreate() {
     setCreatedMemorial(null);
   };
 
-  const handlePortraitChange = async (event: ChangeEvent<HTMLInputElement>) => {
+  const handlePortraitChange = (event: ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
+    event.target.value = "";
     if (!file) return;
+    setPortraitCropFile(file);
+  };
 
+  const applyPortraitCrop = async (cropRect: ImageCropRect) => {
+    if (!portraitCropFile) return;
     setPortraitPhoto({
-      ...(await compressImageFile(file, {
+      ...(await compressImageFile(portraitCropFile, {
         maxBytes: 2_500_000,
         maxDimension: 1500,
-        cropAspectRatio: 4 / 5,
+        cropRect,
       })),
       caption: "대표 사진",
     });
+    setPortraitCropFile(null);
     setSubmitted(false);
     setCreatedMemorial(null);
   };
@@ -1783,6 +1792,15 @@ export default function MemorialCreate() {
       </main>
 
       <Footer />
+      {portraitCropFile && (
+        <ImageCropModal
+          file={portraitCropFile}
+          aspectRatio={4 / 5}
+          title="대표사진 위치 맞추기"
+          onCancel={() => setPortraitCropFile(null)}
+          onConfirm={applyPortraitCrop}
+        />
+      )}
     </div>
   );
 }
