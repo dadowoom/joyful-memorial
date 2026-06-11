@@ -45,13 +45,11 @@ export default function Navbar() {
 
           <nav className="hidden items-center gap-5 md:flex lg:gap-8">
             {navItems.map(item => (
-              <a
-                key={item.href}
-                href={item.href}
-                className="text-sm text-[#686257] transition-colors hover:text-[#29251d]"
-              >
-                {item.label}
-              </a>
+              <Link key={item.href} href={item.href}>
+                <span className="cursor-pointer text-sm text-[#686257] transition-colors hover:text-[#29251d]">
+                  {item.label}
+                </span>
+              </Link>
             ))}
           </nav>
 
@@ -117,14 +115,14 @@ export default function Navbar() {
         <div className="border-t border-[#e8decd] bg-white md:hidden">
           <div className="container flex flex-col gap-1 py-4">
             {navItems.map(item => (
-              <a
-                key={item.href}
-                href={item.href}
-                onClick={closeMobile}
-                className="py-3 text-sm text-[#29251d]"
-              >
-                {item.label}
-              </a>
+              <Link key={item.href} href={item.href}>
+                <span
+                  onClick={closeMobile}
+                  className="cursor-pointer py-3 text-sm text-[#29251d]"
+                >
+                  {item.label}
+                </span>
+              </Link>
             ))}
             {user?.role === "admin" && (
               <Link href="/admin">
