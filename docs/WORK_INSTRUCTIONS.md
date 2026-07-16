@@ -37,14 +37,12 @@ JWT_SECRET=...
 UPLOAD_DIR=./uploads
 OAUTH_SERVER_URL=...
 VITE_APP_ID=joyful-memorial
-SAMPLE_FAMILY_ROOM_PASSWORD=
 ```
 
 DB 준비 후:
 
 ```bash
 pnpm run db:push
-pnpm run db:seed
 pnpm dev
 ```
 
@@ -142,23 +140,7 @@ pnpm build
 - 카드 목록은 가능하지만 페이지 전체를 카드 더미처럼 만들지 않는다.
 - 모바일에서 메뉴, CTA, 입력 폼이 겹치지 않게 확인한다.
 
-## 7. 현재 샘플 데이터
-
-샘플 인물:
-
-- 이름: `정기쁨`
-- 슬러그: `jung-gippeum-mother`
-- 샘플 경로: `/memorial/jung-gippeum-mother/archive`
-
-시드 실행:
-
-```bash
-pnpm run db:seed
-```
-
-샘플은 실제 운영 데이터가 아니라 UI/기능 확인용이다. 시드에는 가족사진, 포항 관련 사진, 활동 사진, 책장 페이지, 샘플 메시지가 포함된다.
-
-## 8. 운영 배포 절차
+## 7. 운영 배포 절차
 
 운영 배포는 반드시 별도 승인 후 진행한다. 서버 접속 정보는 문서에 적지 않고 안전한 채널로만 전달받는다.
 
@@ -170,7 +152,6 @@ git fetch origin main
 git reset --hard origin/main
 pnpm install --frozen-lockfile
 pnpm run db:push
-pnpm run db:seed
 pnpm build
 pm2 restart joyful-memorial --update-env
 ```

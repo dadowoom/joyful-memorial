@@ -166,7 +166,7 @@ export default function Kiosk() {
                   setQuery(event.target.value);
                   setMessage("");
                 }}
-                placeholder="예: 정기쁨"
+                placeholder="예: 부모님 성함"
                 className="min-w-0 flex-1 bg-transparent text-[34px] font-light outline-none placeholder:text-[#b8b8b8]"
                 style={serifStyle}
                 autoComplete="off"
